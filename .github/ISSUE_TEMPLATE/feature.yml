@@ -3,6 +3,14 @@ description: Một đầu việc có thể giao cho một thành viên
 title: "[AREA] "
 labels: [enhancement]
 body:
+  - type: input
+    id: code
+    attributes:
+      label: Mã đầu việc
+      description: Ví dụ DATA-03, ML-05, API-04, UI-03, OPS-02 hoặc DOC-02; kiểm tra issue đã có trước khi tạo.
+      placeholder: DATA-03
+    validations:
+      required: true
   - type: textarea
     id: goal
     attributes:
@@ -21,3 +29,5 @@ body:
     id: files
     attributes:
       label: File dự kiến sửa và phụ thuộc
+      description: Gắn issue liên quan bằng #số; nêu cách chạy thử hoặc đầu ra cần nộp.
+      placeholder: "ml/notebooks/; phụ thuộc #2; chạy notebook và báo bảng số liệu."
