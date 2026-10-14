@@ -48,6 +48,6 @@ Mở `http://localhost:5173`. Tài liệu API ở `http://localhost:8000/docs`. 
 
 ## Cộng tác
 
-Đọc [quy trình Git và PR](docs/COLLABORATION.md), [quy tắc đánh giá](docs/DATA_AND_EVALUATION.md), [hợp đồng API](docs/API_CONTRACT.md) và [bảng công việc](docs/TASK_BOARD.md) trước khi nhận việc. Tạo một issue cho mỗi đầu việc, một nhánh cho mỗi issue và gửi PR vào `main`. Không commit CSV, model artifact, `.env` hoặc dữ liệu người dùng.
+Đọc [hướng dẫn giao việc bằng GitHub Issues](docs/GITHUB_ISSUES.md), [quy trình Git và PR](docs/COLLABORATION.md), [quy tắc đánh giá](docs/DATA_AND_EVALUATION.md), [hợp đồng API](docs/API_CONTRACT.md) và [bảng công việc](docs/TASK_BOARD.md) trước khi nhận việc. Các issue trong bảng đã được tạo; chỉ mở issue mới cho đầu việc phát sinh. Mỗi đầu việc dùng một nhánh và gửi PR vào `main`. Không commit CSV, model artifact, `.env` hoặc dữ liệu người dùng.
 
 Xem [hướng dẫn đưa lên GitHub](docs/GITHUB_SETUP.md) nếu bắt đầu từ bản ZIP.
