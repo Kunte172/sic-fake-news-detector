@@ -1,0 +1,23 @@
+name: Tính năng / nghiên cứu
+description: Một đầu việc có thể giao cho một thành viên
+title: "[AREA] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Mục tiêu
+      description: Kết quả người dùng hoặc nhóm cần nhận được
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Tiêu chí nghiệm thu
+      placeholder: "- [ ] ..."
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: File dự kiến sửa và phụ thuộc

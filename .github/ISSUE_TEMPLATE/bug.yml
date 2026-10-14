@@ -1,0 +1,21 @@
+name: Báo lỗi
+description: Mô tả lỗi có thể tái hiện
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Các bước tái hiện
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Kết quả thực tế và mong đợi
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Môi trường và log đã che thông tin nhạy cảm
