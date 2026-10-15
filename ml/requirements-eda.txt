@@ -1,0 +1,4 @@
+-r ../backend/requirements-dev.txt
+matplotlib>=3.9,<4
+jupyterlab>=4.2,<5
+ipykernel>=6.29,<8
