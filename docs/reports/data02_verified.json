@@ -1,0 +1,770 @@
+{
+  "schema_version": 1,
+  "preprocessing_version": "colab-source-markers-v1",
+  "label_map": {
+    "0": "Fake",
+    "1": "Real"
+  },
+  "features": [
+    "text_clean"
+  ],
+  "excluded_features": [
+    "title",
+    "subject",
+    "date",
+    "_row_id",
+    "group_id"
+  ],
+  "input_sha256": {
+    "Fake.csv": "bebf8bcfe95678bf2c732bf413a2ce5f621af0102c82bf08083b2e5d3c693d0c",
+    "True.csv": "ba0844414a65dc6ae7402b8eee5306da24b6b56488d6767135af466c7dcb2775"
+  },
+  "cleaner_sha256": "78188fa2daa2bc04fbf5c0522d40a9891a136a9951ccf956fa8e9a479d8fad88",
+  "checkpoint_sha256": "0be39063e78cb3a13d5614a7c6494e336ec49a9188e19efd24391c2149ffc6bf",
+  "split_origin": "restored_colab_unchanged",
+  "raw_articles": 44898,
+  "before_cleaning": 38637,
+  "exclusions": {
+    "empty_raw": 631,
+    "exact_label_conflicts_raw": 0,
+    "duplicates_raw": 5630,
+    "empty_clean": 53,
+    "review": 417,
+    "exact_label_conflicts_clean": 0,
+    "duplicates_clean": 1,
+    "near_label_conflicts": 2
+  },
+  "review_reasons_overlapping": {
+    "under_20_words": 318,
+    "photo_credit_remaining": 97,
+    "over_30_percent_removed": 17
+  },
+  "accepted_articles": 38164,
+  "near_duplicates": {
+    "shingle_words": 5,
+    "num_perm": 128,
+    "seed": 42,
+    "candidate_threshold": 0.7,
+    "exact_jaccard_threshold": 0.85,
+    "matched_pairs": 345,
+    "groups": 37824,
+    "multi_article_groups": 337,
+    "articles_in_multi_groups": 679,
+    "largest_group": 3
+  },
+  "split": {
+    "test": {
+      "articles": 3803,
+      "groups": 3782,
+      "fake_0": 1692,
+      "real_1": 2111
+    },
+    "train": {
+      "articles": 30537,
+      "groups": 30258,
+      "fake_0": 13590,
+      "real_1": 16947
+    },
+    "validation": {
+      "articles": 3824,
+      "groups": 3783,
+      "fake_0": 1698,
+      "real_1": 2126
+    }
+  },
+  "checkpoint_verification": {
+    "recovered_rows": 38583,
+    "cleaning_mismatches": 0,
+    "original_fields_match": true,
+    "saved_manifest_matches": true,
+    "new_groups_cross_split": false,
+    "versions": {
+      "scikit-learn": "1.6.1",
+      "pandas": "2.2.3",
+      "numpy": "2.1.3",
+      "joblib": "1.6.0"
+    }
+  },
+  "date_parse": {
+    "parsed": 44888,
+    "unparsed": 10
+  },
+  "versions": {
+    "pandas": "2.3.3",
+    "numpy": "2.1.3",
+    "scikit-learn": "1.6.1",
+    "datasketch": "2.0.0",
+    "joblib": "1.6.0"
+  },
+  "limitations": [
+    "LSH candidates are approximate; no claim of complete semantic deduplication.",
+    "Removing markers does not remove source/style/topic confounding.",
+    "Review quarantine is a selection rule, not proof of incorrect labels.",
+    "Raw subject is label-confounded and is not a shared semantic topic taxonomy.",
+    "No model retraining, ablation, or new performance evaluation in this audit."
+  ],
+  "marker_rates": [
+    {
+      "stage": "raw",
+      "label": 0,
+      "marker": "reuters",
+      "articles": 23481,
+      "matched": 308,
+      "percent": 1.3117
+    },
+    {
+      "stage": "raw",
+      "label": 0,
+      "marker": "dateline",
+      "articles": 23481,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "raw",
+      "label": 0,
+      "marker": "web_link",
+      "articles": 23481,
+      "matched": 5567,
+      "percent": 23.7085
+    },
+    {
+      "stage": "raw",
+      "label": 0,
+      "marker": "photo_credit",
+      "articles": 23481,
+      "matched": 8340,
+      "percent": 35.5181
+    },
+    {
+      "stage": "raw",
+      "label": 0,
+      "marker": "social_reference",
+      "articles": 23481,
+      "matched": 4523,
+      "percent": 19.2624
+    },
+    {
+      "stage": "raw",
+      "label": 0,
+      "marker": "leading_uppercase",
+      "articles": 23481,
+      "matched": 159,
+      "percent": 0.6771
+    },
+    {
+      "stage": "raw",
+      "label": 1,
+      "marker": "reuters",
+      "articles": 21417,
+      "matched": 21378,
+      "percent": 99.8179
+    },
+    {
+      "stage": "raw",
+      "label": 1,
+      "marker": "dateline",
+      "articles": 21417,
+      "matched": 20592,
+      "percent": 96.1479
+    },
+    {
+      "stage": "raw",
+      "label": 1,
+      "marker": "web_link",
+      "articles": 21417,
+      "matched": 41,
+      "percent": 0.1914
+    },
+    {
+      "stage": "raw",
+      "label": 1,
+      "marker": "photo_credit",
+      "articles": 21417,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "raw",
+      "label": 1,
+      "marker": "social_reference",
+      "articles": 21417,
+      "matched": 7,
+      "percent": 0.0327
+    },
+    {
+      "stage": "raw",
+      "label": 1,
+      "marker": "leading_uppercase",
+      "articles": 21417,
+      "matched": 18183,
+      "percent": 84.8998
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 0,
+      "marker": "reuters",
+      "articles": 17448,
+      "matched": 209,
+      "percent": 1.1978
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 0,
+      "marker": "dateline",
+      "articles": 17448,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 0,
+      "marker": "web_link",
+      "articles": 17448,
+      "matched": 4279,
+      "percent": 24.5243
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 0,
+      "marker": "photo_credit",
+      "articles": 17448,
+      "matched": 8330,
+      "percent": 47.7419
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 0,
+      "marker": "social_reference",
+      "articles": 17448,
+      "matched": 3428,
+      "percent": 19.647
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 0,
+      "marker": "leading_uppercase",
+      "articles": 17448,
+      "matched": 104,
+      "percent": 0.5961
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 1,
+      "marker": "reuters",
+      "articles": 21189,
+      "matched": 21152,
+      "percent": 99.8254
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 1,
+      "marker": "dateline",
+      "articles": 21189,
+      "matched": 20370,
+      "percent": 96.1348
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 1,
+      "marker": "web_link",
+      "articles": 21189,
+      "matched": 41,
+      "percent": 0.1935
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 1,
+      "marker": "photo_credit",
+      "articles": 21189,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 1,
+      "marker": "social_reference",
+      "articles": 21189,
+      "matched": 7,
+      "percent": 0.033
+    },
+    {
+      "stage": "deduplicated_before_clean",
+      "label": 1,
+      "marker": "leading_uppercase",
+      "articles": 21189,
+      "matched": 17997,
+      "percent": 84.9356
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 0,
+      "marker": "reuters",
+      "articles": 17448,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 0,
+      "marker": "dateline",
+      "articles": 17448,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 0,
+      "marker": "web_link",
+      "articles": 17448,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 0,
+      "marker": "photo_credit",
+      "articles": 17448,
+      "matched": 97,
+      "percent": 0.5559
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 0,
+      "marker": "social_reference",
+      "articles": 17448,
+      "matched": 4,
+      "percent": 0.0229
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 0,
+      "marker": "leading_uppercase",
+      "articles": 17448,
+      "matched": 105,
+      "percent": 0.6018
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 1,
+      "marker": "reuters",
+      "articles": 21189,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 1,
+      "marker": "dateline",
+      "articles": 21189,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 1,
+      "marker": "web_link",
+      "articles": 21189,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 1,
+      "marker": "photo_credit",
+      "articles": 21189,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 1,
+      "marker": "social_reference",
+      "articles": 21189,
+      "matched": 7,
+      "percent": 0.033
+    },
+    {
+      "stage": "after_clean_before_quarantine",
+      "label": 1,
+      "marker": "leading_uppercase",
+      "articles": 21189,
+      "matched": 240,
+      "percent": 1.1327
+    },
+    {
+      "stage": "accepted",
+      "label": 0,
+      "marker": "reuters",
+      "articles": 16980,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "accepted",
+      "label": 0,
+      "marker": "dateline",
+      "articles": 16980,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "accepted",
+      "label": 0,
+      "marker": "web_link",
+      "articles": 16980,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "accepted",
+      "label": 0,
+      "marker": "photo_credit",
+      "articles": 16980,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "accepted",
+      "label": 0,
+      "marker": "social_reference",
+      "articles": 16980,
+      "matched": 3,
+      "percent": 0.0177
+    },
+    {
+      "stage": "accepted",
+      "label": 0,
+      "marker": "leading_uppercase",
+      "articles": 16980,
+      "matched": 94,
+      "percent": 0.5536
+    },
+    {
+      "stage": "accepted",
+      "label": 1,
+      "marker": "reuters",
+      "articles": 21184,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "accepted",
+      "label": 1,
+      "marker": "dateline",
+      "articles": 21184,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "accepted",
+      "label": 1,
+      "marker": "web_link",
+      "articles": 21184,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "accepted",
+      "label": 1,
+      "marker": "photo_credit",
+      "articles": 21184,
+      "matched": 0,
+      "percent": 0.0
+    },
+    {
+      "stage": "accepted",
+      "label": 1,
+      "marker": "social_reference",
+      "articles": 21184,
+      "matched": 7,
+      "percent": 0.033
+    },
+    {
+      "stage": "accepted",
+      "label": 1,
+      "marker": "leading_uppercase",
+      "articles": 21184,
+      "matched": 240,
+      "percent": 1.1329
+    }
+  ],
+  "subject_counts": [
+    {
+      "subject": "Government News",
+      "0": 1570,
+      "1": 0
+    },
+    {
+      "subject": "Middle-east",
+      "0": 778,
+      "1": 0
+    },
+    {
+      "subject": "News",
+      "0": 9050,
+      "1": 0
+    },
+    {
+      "subject": "US_News",
+      "0": 783,
+      "1": 0
+    },
+    {
+      "subject": "left-news",
+      "0": 4459,
+      "1": 0
+    },
+    {
+      "subject": "politics",
+      "0": 6841,
+      "1": 0
+    },
+    {
+      "subject": "politicsNews",
+      "0": 0,
+      "1": 11272
+    },
+    {
+      "subject": "worldnews",
+      "0": 0,
+      "1": 10145
+    }
+  ],
+  "month_counts": [
+    {
+      "date": "2015-03",
+      "0": 8,
+      "1": 0
+    },
+    {
+      "date": "2015-04",
+      "0": 326,
+      "1": 0
+    },
+    {
+      "date": "2015-05",
+      "0": 338,
+      "1": 0
+    },
+    {
+      "date": "2015-06",
+      "0": 236,
+      "1": 0
+    },
+    {
+      "date": "2015-07",
+      "0": 291,
+      "1": 0
+    },
+    {
+      "date": "2015-08",
+      "0": 220,
+      "1": 0
+    },
+    {
+      "date": "2015-09",
+      "0": 202,
+      "1": 0
+    },
+    {
+      "date": "2015-10",
+      "0": 281,
+      "1": 0
+    },
+    {
+      "date": "2015-11",
+      "0": 276,
+      "1": 0
+    },
+    {
+      "date": "2015-12",
+      "0": 301,
+      "1": 0
+    },
+    {
+      "date": "2016-01",
+      "0": 1081,
+      "1": 246
+    },
+    {
+      "date": "2016-02",
+      "0": 1020,
+      "1": 432
+    },
+    {
+      "date": "2016-03",
+      "0": 1088,
+      "1": 490
+    },
+    {
+      "date": "2016-04",
+      "0": 977,
+      "1": 383
+    },
+    {
+      "date": "2016-05",
+      "0": 1012,
+      "1": 394
+    },
+    {
+      "date": "2016-06",
+      "0": 871,
+      "1": 419
+    },
+    {
+      "date": "2016-07",
+      "0": 883,
+      "1": 338
+    },
+    {
+      "date": "2016-08",
+      "0": 892,
+      "1": 265
+    },
+    {
+      "date": "2016-09",
+      "0": 936,
+      "1": 351
+    },
+    {
+      "date": "2016-10",
+      "0": 1082,
+      "1": 336
+    },
+    {
+      "date": "2016-11",
+      "0": 1004,
+      "1": 637
+    },
+    {
+      "date": "2016-12",
+      "0": 908,
+      "1": 425
+    },
+    {
+      "date": "2017-01",
+      "0": 1029,
+      "1": 750
+    },
+    {
+      "date": "2017-02",
+      "0": 879,
+      "1": 591
+    },
+    {
+      "date": "2017-03",
+      "0": 1066,
+      "1": 684
+    },
+    {
+      "date": "2017-04",
+      "0": 805,
+      "1": 543
+    },
+    {
+      "date": "2017-05",
+      "0": 827,
+      "1": 505
+    },
+    {
+      "date": "2017-06",
+      "0": 814,
+      "1": 556
+    },
+    {
+      "date": "2017-07",
+      "0": 777,
+      "1": 540
+    },
+    {
+      "date": "2017-08",
+      "0": 795,
+      "1": 657
+    },
+    {
+      "date": "2017-09",
+      "0": 636,
+      "1": 3074
+    },
+    {
+      "date": "2017-10",
+      "0": 605,
+      "1": 3172
+    },
+    {
+      "date": "2017-11",
+      "0": 523,
+      "1": 3096
+    },
+    {
+      "date": "2017-12",
+      "0": 447,
+      "1": 2533
+    },
+    {
+      "date": "2018-02",
+      "0": 35,
+      "1": 0
+    },
+    {
+      "date": "unparsed",
+      "0": 10,
+      "1": 0
+    }
+  ],
+  "excluded_counts_by_label": [
+    {
+      "reason": "empty_raw",
+      "label": 0,
+      "articles": 630
+    },
+    {
+      "reason": "empty_raw",
+      "label": 1,
+      "articles": 1
+    },
+    {
+      "reason": "duplicates_raw",
+      "label": 0,
+      "articles": 5403
+    },
+    {
+      "reason": "duplicates_raw",
+      "label": 1,
+      "articles": 227
+    },
+    {
+      "reason": "empty_clean",
+      "label": 0,
+      "articles": 53
+    },
+    {
+      "reason": "review",
+      "label": 0,
+      "articles": 413
+    },
+    {
+      "reason": "review",
+      "label": 1,
+      "articles": 4
+    },
+    {
+      "reason": "duplicates_clean",
+      "label": 0,
+      "articles": 1
+    },
+    {
+      "reason": "near_label_conflicts",
+      "label": 0,
+      "articles": 1
+    },
+    {
+      "reason": "near_label_conflicts",
+      "label": 1,
+      "articles": 1
+    }
+  ],
+  "verification_date": "2026-10-16",
+  "base_commit": "ee259851b177f3d0162abefde314f01dcda4292c"
+}
