@@ -16,8 +16,7 @@ Giữ nguyên cấu trúc thư mục trong gói bàn giao:
 - `docs/DATA02_REPORT.md` và `docs/reports/data02_verified.json`: kết quả và bằng chứng tổng hợp.
 - Tài liệu này.
 
-Gói được chuẩn bị trên `main` tại commit `ee259851b177f3d0162abefde314f01dcda4292c`. Nếu nhóm đã sửa các file có sẵn, ghép phần thay đổi thay vì ghi đè toàn bộ. Không có commit hoặc PR nào được gửi lên GitHub trong lần bàn giao này.
-
+Gói được chuẩn bị trên `main` tại commit `ee259851b177f3d0162abefde314f01dcda4292c`. Nếu nhóm đã sửa các file có sẵn, ghép phần thay đổi thay vì ghi đè toàn bộ. DATA-02 đã được gửi trong PR #15 trên nhánh `feat/2-data-audit`. Nhánh đã được đồng bộ với `main` có DATA-01. Chạy lại 29 kiểm thử backend trên máy: tất cả đều đạt.
 ## Chạy lại với dữ liệu Colab đã làm
 
 Đặt `Fake.csv`, `True.csv` vào `ml/data/raw/`. Hai file lấy từ bộ Kaggle được chỉ trong README. Giữ checkpoint do chính bạn tạo `sic_ai_step10.joblib` ở máy; không đưa lên Git.
@@ -71,3 +70,18 @@ Các file dữ liệu nằm trong đường dẫn đã được `.gitignore` b�
 - Báo cáo ghi rõ giới hạn: không chứng minh hết sai lệch nguồn, không coi các bài cách ly là nhãn sai.
 
 Chỉ đánh dấu issue hoàn tất sau khi đưa các file vào dự án và chạy kiểm thử trong nhánh tích hợp. Không đánh dấu các issue ML/API/UI khác là hoàn tất theo báo cáo này.
+## Kết quả chạy lại sau khi đồng bộ DATA-01
+
+Ngày 19/10/2026, chạy lại trên máy cá nhân với mã tại commit `64ab9fec7b7cd93b09a2b043707afdcb567e7a67`.
+
+- Bộ kiểm thử backend: 29 kiểm thử đạt.
+- Kiểm toán dữ liệu thật từ `Fake.csv`, `True.csv` và checkpoint Colab tin cậy `sic_ai_step10.joblib`.
+- Đầu vào: 44.898 bài. Giữ lại: 38.164 bài.
+- Train: 30.537; validation: 3.824; test: 3.803.
+- Sai khác nội dung làm sạch so với checkpoint: 0.
+- Trường dữ liệu gốc và manifest chia tập khớp checkpoint.
+- Các nhóm gần trùng mới phát hiện không chồng lấn giữa các tập.
+
+Bằng chứng tổng hợp: [Kết quả chạy lại](reports/data02_rerun_2026-10-19.json), gồm checksum dữ liệu, checkpoint, phiên bản thư viện và kết quả đối chiếu.
+
+Đây là kết quả chạy trên máy cá nhân, không phải lần kiểm toán toàn bộ dữ liệu trên CI. Lần chạy này không huấn luyện lại mô hình.

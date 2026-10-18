@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "preprocessing_version": "colab-source-markers-v1",
+  "label_map": {
+    "0": "Fake",
+    "1": "Real"
+  },
+  "features": [
+    "text_clean"
+  ],
+  "excluded_features": [
+    "title",
+    "subject",
+    "date",
+    "_row_id",
+    "group_id"
+  ],
+  "input_sha256": {
+    "Fake.csv": "bebf8bcfe95678bf2c732bf413a2ce5f621af0102c82bf08083b2e5d3c693d0c",
+    "True.csv": "ba0844414a65dc6ae7402b8eee5306da24b6b56488d6767135af466c7dcb2775"
+  },
+  "cleaner_sha256": "78188fa2daa2bc04fbf5c0522d40a9891a136a9951ccf956fa8e9a479d8fad88",
+  "checkpoint_sha256": "0be39063e78cb3a13d5614a7c6494e336ec49a9188e19efd24391c2149ffc6bf",
+  "split_origin": "restored_colab_unchanged",
+  "raw_articles": 44898,
+  "before_cleaning": 38637,
+  "exclusions": {
+    "empty_raw": 631,
+    "exact_label_conflicts_raw": 0,
+    "duplicates_raw": 5630,
+    "empty_clean": 53,
+    "review": 417,
+    "exact_label_conflicts_clean": 0,
+    "duplicates_clean": 1,
+    "near_label_conflicts": 2
+  },
+  "review_reasons_overlapping": {
+    "under_20_words": 318,
+    "photo_credit_remaining": 97,
+    "over_30_percent_removed": 17
+  },
+  "accepted_articles": 38164,
+  "near_duplicates": {
+    "shingle_words": 5,
+    "num_perm": 128,
+    "seed": 42,
+    "candidate_threshold": 0.7,
+    "exact_jaccard_threshold": 0.85,
+    "matched_pairs": 345,
+    "groups": 37824,
+    "multi_article_groups": 337,
+    "articles_in_multi_groups": 679,
+    "largest_group": 3
+  },
+  "split": {
+    "test": {
+      "articles": 3803,
+      "groups": 3782,
+      "fake_0": 1692,
+      "real_1": 2111
+    },
+    "train": {
+      "articles": 30537,
+      "groups": 30258,
+      "fake_0": 13590,
+      "real_1": 16947
+    },
+    "validation": {
+      "articles": 3824,
+      "groups": 3783,
+      "fake_0": 1698,
+      "real_1": 2126
+    }
+  },
+  "checkpoint_verification": {
+    "recovered_rows": 38583,
+    "cleaning_mismatches": 0,
+    "original_fields_match": true,
+    "saved_manifest_matches": true,
+    "new_groups_cross_split": false,
+    "versions": {
+      "scikit-learn": "1.6.1",
+      "pandas": "2.2.3",
+      "numpy": "2.1.3",
+      "joblib": "1.6.0"
+    }
+  },
+  "date_parse": {
+    "parsed": 44888,
+    "unparsed": 10
+  },
+  "versions": {
+    "pandas": "2.3.3",
+    "numpy": "2.1.3",
+    "scikit-learn": "1.6.1",
+    "datasketch": "2.0.0",
+    "joblib": "1.6.0"
+  },
+  "limitations": [
+    "LSH candidates are approximate; no claim of complete semantic deduplication.",
+    "Removing markers does not remove source/style/topic confounding.",
+    "Review quarantine is a selection rule, not proof of incorrect labels.",
+    "Raw subject is label-confounded and is not a shared semantic topic taxonomy.",
+    "No model retraining, ablation, or new performance evaluation in this audit."
+  ]
+}
