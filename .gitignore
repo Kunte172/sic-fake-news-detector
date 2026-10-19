@@ -11,3 +11,5 @@ ml/data/
 ml/artifacts/
 backend/artifacts/
 .DS_Store
+*.db
+sic_fake_news.db
