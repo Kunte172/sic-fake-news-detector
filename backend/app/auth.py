@@ -2,21 +2,32 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 import bcrypt
 from jose import JWTError, jwt
+import os
 
-SECRET_KEY = "sic-fake-news-secret-key-capstone-2026"
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY or len(SECRET_KEY) < 32:
+    raise ValueError("chưa cấu hình biến môi trường SECRET_KEY hoặc khóa quá ngắn (từ >= 32 ký tự )!")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
+MAX_PASSWORD_BYTES = 72
+
+
+def _to_bytes(password: str) -> bytes:
+    pwd_bytes = password.encode("utf-8")
+    if len(pwd_bytes) > MAX_PASSWORD_BYTES:
+        raise ValueError("Mật khẩu vượt quá 72 byte")
+    return pwd_bytes
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    pwd_bytes = plain_password.encode("utf-8")[:72]
-    return bcrypt.checkpw(pwd_bytes, hashed_password.encode("utf-8"))
-
+    try:
+        return bcrypt.checkpw(_to_bytes(plain_password), hashed_password.encode("utf-8"))
+    except ValueError:
+        return False
 
 def get_password_hash(password: str) -> str:
-    pwd_bytes = password.encode("utf-8")[:72]
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
-
+    return bcrypt.hashpw(_to_bytes(password), salt).decode("utf-8")
 
 def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
@@ -26,9 +37,13 @@ def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta]
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-
 def decode_access_token(token: str) -> Optional[dict[str, Any]]:
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return jwt.decode(
+            token, 
+            SECRET_KEY, 
+            algorithms=[ALGORITHM], 
+            options={"require": ["exp", "sub"]}
+        )
     except JWTError:
         return None
