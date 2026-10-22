@@ -1,0 +1,9 @@
+# Phiên bản đã ghi nhận ở lần chạy Colab; GPU qua runtime Colab.
+tensorflow==2.21.0
+keras==3.13.2
+numpy==2.1.3
+pandas==2.2.3
+scikit-learn==1.6.1
+# Chưa ghi nhận phiên bản chính xác của các phụ thuộc bên dưới.
+joblib
+matplotlib
