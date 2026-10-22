@@ -1,0 +1,513 @@
+{
+  "run_metadata": {
+    "run_id": "20261022T152137686036Z",
+    "seed": 42,
+    "labels": {
+      "Fake": 0,
+      "Real": 1
+    },
+    "input": "text_clean; áp dụng clean_source_markers trước khi suy luận văn bản gốc",
+    "vocabulary_fit": "train_only",
+    "max_tokens": 20000,
+    "sequence_length": 400,
+    "batch_size": 64,
+    "max_epochs": 15,
+    "epochs_completed": 3,
+    "early_stopping": {
+      "monitor": "val_loss",
+      "mode": "min",
+      "patience": 2,
+      "restore_best_weights": true
+    },
+    "best_epoch_1_based": 1,
+    "training_seconds": 41.45681006000001,
+    "threshold_real": 0.5,
+    "split_manifest_sha256": "dcedfbf197a049dcf61647bad10c216278077a7350c91380947bd66d845da680",
+    "checkpoint_sha256": "63e7a206a500cd1774314d83e6cee178e5e3386cecc5d78d0731153389946323",
+    "model_sha256": "ee270fd866c854f6f18628672c39a8a3387630b771075143fefe4f4150637679",
+    "versions": {
+      "tensorflow": "2.21.0",
+      "keras": "3.13.2",
+      "numpy": "2.1.3",
+      "pandas": "2.2.3",
+      "scikit-learn": "1.6.1"
+    },
+    "python": "3.13.15",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "devices": [
+      {
+        "name": "/physical_device:CPU:0",
+        "type": "CPU",
+        "details": {}
+      },
+      {
+        "name": "/physical_device:GPU:0",
+        "type": "GPU",
+        "details": {
+          "compute_capability": "(7, 5)",
+          "device_name": "Tesla T4"
+        }
+      }
+    ],
+    "note": "Lần huấn luyện mới; không gán kết quả cũ cho mô hình mới. Không chọn tham số bằng test.",
+    "benchmark": {
+      "source": "validation, first rows in saved order",
+      "warmup_calls": 2,
+      "repeats": 5,
+      "batch_sizes": [
+        1,
+        64
+      ],
+      "scope": "text_clean -> vectorization -> prediction; model already loaded",
+      "note": "Batch 64 ms/article là chi phí trung bình theo lô, không phải độ trễ một yêu cầu. SVM dùng CPU; LSTM có thể dùng GPU. Chỉ so sánh với thông tin thiết bị kèm theo."
+    }
+  },
+  "validation_metrics": [
+    {
+      "mô hình": "TF-IDF + Linear SVM",
+      "Accuracy": "0.9921548117154811",
+      "F1-macro": "0.9920514824484095",
+      "F1-Fake (nhãn 0)": "0.9911452184179457"
+    },
+    {
+      "mô hình": "TF-IDF + Logistic Regression",
+      "Accuracy": "0.9848326359832636",
+      "F1-macro": "0.9846118963628648",
+      "F1-Fake (nhãn 0)": "0.9827688651218063"
+    },
+    {
+      "mô hình": "LSTM",
+      "Accuracy": "0.9824790794979079",
+      "F1-macro": "0.9822450816011221",
+      "F1-Fake (nhãn 0)": "0.9802067946824224"
+    },
+    {
+      "mô hình": "TF-IDF + Multinomial Naive Bayes",
+      "Accuracy": "0.9563284518828452",
+      "F1-macro": "0.955771807269719",
+      "F1-Fake (nhãn 0)": "0.9508100147275405"
+    },
+    {
+      "mô hình": "Luôn đoán lớp phổ biến",
+      "Accuracy": "0.5559623430962343",
+      "F1-macro": "0.3573109243697479",
+      "F1-Fake (nhãn 0)": "0.0"
+    }
+  ],
+  "test_metrics": [
+    {
+      "mô hình": "TF-IDF + Logistic Regression",
+      "Accuracy": "0.982908230344465",
+      "F1-macro": "0.9826826989447511",
+      "F1-Fake (nhãn 0)": "0.9807064410804393",
+      "số bài sai": "65",
+      "đã chọn theo validation": "False"
+    },
+    {
+      "mô hình": "TF-IDF + Linear SVM",
+      "Accuracy": "0.993163292137786",
+      "F1-macro": "0.9930792830081763",
+      "F1-Fake (nhãn 0)": "0.9923167848699763",
+      "số bài sai": "26",
+      "đã chọn theo validation": "True"
+    },
+    {
+      "mô hình": "TF-IDF + Multinomial Naive Bayes",
+      "Accuracy": "0.9513541940573231",
+      "F1-macro": "0.9507593214905986",
+      "F1-Fake (nhãn 0)": "0.9453471196454948",
+      "số bài sai": "185",
+      "đã chọn theo validation": "False"
+    },
+    {
+      "mô hình": "LSTM",
+      "Accuracy": "0.9773862739942151",
+      "F1-macro": "0.9770948025768049",
+      "F1-Fake (nhãn 0)": "0.974510966212211",
+      "số bài sai": "86",
+      "đã chọn theo validation": "False"
+    }
+  ],
+  "training_log": [
+    {
+      "epoch": "0",
+      "accuracy": "0.939188539981842",
+      "loss": "0.16401219367980957",
+      "val_accuracy": "0.9824790954589844",
+      "val_loss": "0.06985431164503098"
+    },
+    {
+      "epoch": "1",
+      "accuracy": "0.984674334526062",
+      "loss": "0.05997636169195175",
+      "val_accuracy": "0.9712343215942383",
+      "val_loss": "0.10316520184278488"
+    },
+    {
+      "epoch": "2",
+      "accuracy": "0.9895536303520203",
+      "loss": "0.040414318442344666",
+      "val_accuracy": "0.98221755027771",
+      "val_loss": "0.0718114823102951"
+    }
+  ],
+  "timing_summary": [
+    {
+      "model": "LSTM",
+      "batch_size": "1",
+      "median_ms": "27.853015000005144",
+      "min_ms": "27.722535999998854",
+      "max_ms": "35.3406440000299",
+      "amortized_ms_per_article": "27.853015000005144"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "64",
+      "median_ms": "36.20644599999423",
+      "min_ms": "35.499934999961624",
+      "max_ms": "38.04294200000413",
+      "amortized_ms_per_article": "0.5657257187499098"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "1",
+      "median_ms": "1.4847850000023755",
+      "min_ms": "1.3806609999846842",
+      "max_ms": "1.5244950000123936",
+      "amortized_ms_per_article": "1.4847850000023755"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "64",
+      "median_ms": "36.91748100004588",
+      "min_ms": "34.40912799999296",
+      "max_ms": "50.36797200000365",
+      "amortized_ms_per_article": "0.5768356406257169"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "1",
+      "median_ms": "1.545120000002953",
+      "min_ms": "1.3737679999508146",
+      "max_ms": "2.255166000054487",
+      "amortized_ms_per_article": "1.545120000002953"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "64",
+      "median_ms": "36.753691000001254",
+      "min_ms": "34.62037999997847",
+      "max_ms": "38.194642999997086",
+      "amortized_ms_per_article": "0.5742764218750196"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "1",
+      "median_ms": "1.902028000017708",
+      "min_ms": "1.7154230000073767",
+      "max_ms": "2.095755000027566",
+      "amortized_ms_per_article": "1.902028000017708"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "64",
+      "median_ms": "34.67867300003036",
+      "min_ms": "33.769151999990754",
+      "max_ms": "35.68554100002075",
+      "amortized_ms_per_article": "0.5418542656254743"
+    }
+  ],
+  "timing_samples": [
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "1",
+      "repeat": "1",
+      "elapsed_ms": "2.255166000054487"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "1",
+      "repeat": "2",
+      "elapsed_ms": "1.629497999999785"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "1",
+      "repeat": "3",
+      "elapsed_ms": "1.4047170000139886"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "1",
+      "repeat": "4",
+      "elapsed_ms": "1.545120000002953"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "1",
+      "repeat": "5",
+      "elapsed_ms": "1.3737679999508146"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "64",
+      "repeat": "1",
+      "elapsed_ms": "34.62037999997847"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "64",
+      "repeat": "2",
+      "elapsed_ms": "36.753691000001254"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "64",
+      "repeat": "3",
+      "elapsed_ms": "38.194642999997086"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "64",
+      "repeat": "4",
+      "elapsed_ms": "37.69718900002772"
+    },
+    {
+      "model": "TF-IDF + Logistic Regression",
+      "batch_size": "64",
+      "repeat": "5",
+      "elapsed_ms": "36.295546000019385"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "1",
+      "repeat": "1",
+      "elapsed_ms": "1.5244950000123936"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "1",
+      "repeat": "2",
+      "elapsed_ms": "1.4715230000206247"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "1",
+      "repeat": "3",
+      "elapsed_ms": "1.5011450000201876"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "1",
+      "repeat": "4",
+      "elapsed_ms": "1.3806609999846842"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "1",
+      "repeat": "5",
+      "elapsed_ms": "1.4847850000023755"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "64",
+      "repeat": "1",
+      "elapsed_ms": "34.40912799999296"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "64",
+      "repeat": "2",
+      "elapsed_ms": "50.36797200000365"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "64",
+      "repeat": "3",
+      "elapsed_ms": "39.20282699999689"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "64",
+      "repeat": "4",
+      "elapsed_ms": "36.91748100004588"
+    },
+    {
+      "model": "TF-IDF + Linear SVM",
+      "batch_size": "64",
+      "repeat": "5",
+      "elapsed_ms": "35.65985800003091"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "1",
+      "repeat": "1",
+      "elapsed_ms": "2.095755000027566"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "1",
+      "repeat": "2",
+      "elapsed_ms": "1.7154230000073767"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "1",
+      "repeat": "3",
+      "elapsed_ms": "1.889917999960744"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "1",
+      "repeat": "4",
+      "elapsed_ms": "1.902028000017708"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "1",
+      "repeat": "5",
+      "elapsed_ms": "1.9589990000099533"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "64",
+      "repeat": "1",
+      "elapsed_ms": "33.769151999990754"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "64",
+      "repeat": "2",
+      "elapsed_ms": "33.96240500001113"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "64",
+      "repeat": "3",
+      "elapsed_ms": "34.67867300003036"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "64",
+      "repeat": "4",
+      "elapsed_ms": "35.23564599998963"
+    },
+    {
+      "model": "TF-IDF + Multinomial Naive Bayes",
+      "batch_size": "64",
+      "repeat": "5",
+      "elapsed_ms": "35.68554100002075"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "1",
+      "repeat": "1",
+      "elapsed_ms": "27.853015000005144"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "1",
+      "repeat": "2",
+      "elapsed_ms": "27.800205999994887"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "1",
+      "repeat": "3",
+      "elapsed_ms": "27.722535999998854"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "1",
+      "repeat": "4",
+      "elapsed_ms": "31.4075770000386"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "1",
+      "repeat": "5",
+      "elapsed_ms": "35.3406440000299"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "64",
+      "repeat": "1",
+      "elapsed_ms": "36.14936299999272"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "64",
+      "repeat": "2",
+      "elapsed_ms": "36.270195999975385"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "64",
+      "repeat": "3",
+      "elapsed_ms": "36.20644599999423"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "64",
+      "repeat": "4",
+      "elapsed_ms": "38.04294200000413"
+    },
+    {
+      "model": "LSTM",
+      "batch_size": "64",
+      "repeat": "5",
+      "elapsed_ms": "35.499934999961624"
+    }
+  ],
+  "verification": {
+    "model_hash_matches": true,
+    "manifest_hash_matches": true,
+    "uploaded_checkpoint_hash_matches": true,
+    "same_manifest_as_DATA02": true,
+    "train_count": 30537,
+    "validation_count": 3824,
+    "test_count": 3803,
+    "test_ids_labels_groups_match": true,
+    "test_TF-IDF + Logistic Regression": {
+      "accuracy": 0.982908230344465,
+      "f1_macro": 0.9826826989447511,
+      "errors": 65
+    },
+    "test_TF-IDF + Linear SVM": {
+      "accuracy": 0.993163292137786,
+      "f1_macro": 0.9930792830081763,
+      "errors": 26
+    },
+    "test_TF-IDF + Multinomial Naive Bayes": {
+      "accuracy": 0.9513541940573231,
+      "f1_macro": 0.9507593214905986,
+      "errors": 185
+    },
+    "test_LSTM": {
+      "accuracy": 0.9773862739942151,
+      "f1_macro": 0.9770948025768049,
+      "errors": 86
+    },
+    "validation_ids_labels_groups_match": true,
+    "validation_prediction": {
+      "accuracy": 0.9824790794979079,
+      "f1_macro": 0.9822450816011221,
+      "errors": 67
+    },
+    "best_epoch_matches": true,
+    "early_stopping_log_consistent": true,
+    "timing_medians_match": true,
+    "timing_sample_count": 40,
+    "model_archive_integrity": true,
+    "scope": "Archive/metadata integrity and recomputation from saved predictions, not a fresh inference run."
+  },
+  "notebook_sha256": "4354d3c7eb4687c3ea57a132e2dacbdf9baa22e8b597aa22ca0fd5163058c19b",
+  "source_cells_1_based": [
+    21,
+    22,
+    24,
+    26,
+    27,
+    28
+  ]
+}
