@@ -6,6 +6,8 @@ on:
 jobs:
   python:
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: ci-test-key-only-never-use-this-in-a-deployment-123456789
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
