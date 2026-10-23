@@ -4,12 +4,9 @@ import bcrypt
 from jose import JWTError, jwt
 import os
 
-SECRET_KEY = os.environ.get(
-    "SECRET_KEY", 
-    "fallback-secret-key-sieu-dai-dung-cho-moi-truong-test-va-ci-123456789"
-)
+SECRET_KEY = os.environ.get("SECRET_KEY", "")
 if len(SECRET_KEY) < 32:
-    raise ValueError("Khóa không đủ dài!")
+    raise RuntimeError("Set SECRET_KEY to a unique secret of at least 32 characters before starting the API")
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
