@@ -10,4 +10,7 @@ dist/
 ml/data/
 ml/artifacts/
 backend/artifacts/
+*.db
+*.sqlite
+*.sqlite3
 .DS_Store

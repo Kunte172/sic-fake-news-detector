@@ -7,7 +7,7 @@ Base URL local: `http://localhost:8000`. JSON UTF-8.
 - `GET /health` → `{"status":"ok","model_loaded":false}`; chỉ phản ánh API và trạng thái artifact.
 - `POST /api/v1/analyze` với `{"text":"English article..."}` → `{"label":"SUSPICIOUS","score":0.72,"model_version":"baseline-v0"}`. `score` là điểm lớp fake theo mô hình, không phải xác suất sự kiện sai sự thật. Giá trị trên chỉ là ví dụ.
 - Nếu chưa nạp artifact, API trả HTTP 503. Nếu văn bản quá ngắn hoặc quá dài, trả HTTP 422.
-- `POST /api/v1/auth/register` với `{"email":"...","password":"...","role":"USER"}` → trả HTTP 201 `{"email":"...","role":"USER"}`. Lỗi 400 nếu trùng email.
+- `POST /api/v1/auth/register` với `{"email":"...","password":"..."}` → trả HTTP 201 `{"email":"...","role":"USER"}`. Server tự gán quyền USER; client không chọn role. Lỗi 400 nếu trùng email.
 - `POST /api/v1/auth/login` với `{"email":"...","password":"..."}` → trả HTTP 200 `{"access_token":"...","token_type":"bearer","role":"USER"}`. Lỗi 401 nếu sai mật khẩu/email.
 - `GET /api/v1/auth/me` với header `Authorization: Bearer <token>` → trả HTTP 200 `{"email":"...","role":"USER"}`. Lỗi 401 nếu token sai/hết hạn.
 

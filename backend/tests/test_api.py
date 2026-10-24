@@ -1,11 +1,14 @@
 import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import unittest
 from datetime import timedelta
 from unittest.mock import patch
 
-os.environ["SECRET_KEY"] = "test-secret-key-for-unittest-test-secret-key-for-unittest-test-secret-key-for-unittest-test-secret-key-for-unittest"
-os.environ["ADMIN_EMAIL"] = "admin@example.com"
-os.environ["ADMIN_PASSWORD"] = "Admin@123456"
+_had_secret = "SECRET_KEY" in os.environ
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-unittest-test-secret-key-for-unittest")
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -19,6 +22,9 @@ from backend.app.main import app, predictor, require_admin
 from backend.app.database import Base, get_db
 from backend.app import models
 from backend.app.auth import create_access_token, get_password_hash
+
+if not _had_secret:
+    os.environ.pop("SECRET_KEY", None)
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
@@ -35,14 +41,13 @@ def override_get_db():
     finally:
         db.close()
 
-app.dependency_overrides[get_db] = override_get_db
-
 @app.get("/api/v1/admin/test-only")
 def admin_test_route(admin: Annotated[models.User, Depends(require_admin)]):
     return {"status": "ok", "admin_email": admin.email}
 
 class ApiTests(unittest.TestCase):
     def setUp(self):
+        app.dependency_overrides[get_db] = override_get_db
         self.environment = patch.dict(os.environ, {"MODEL_PATH": ""})
         self.environment.start()
         predictor.cache_clear()
@@ -51,6 +56,7 @@ class ApiTests(unittest.TestCase):
 
     def tearDown(self):
         self.client.close()
+        app.dependency_overrides.pop(get_db, None)
         Base.metadata.drop_all(bind=engine)
         predictor.cache_clear()
         self.environment.stop()
@@ -109,6 +115,61 @@ class ApiTests(unittest.TestCase):
     def test_password_over_72_bytes_rejected(self):
         res = self.client.post("/api/v1/auth/register", json={"email": "long@example.com", "password": "a" * 73})
         self.assertEqual(res.status_code, 422)
+
+    def test_missing_secret_prevents_startup(self):
+        environment = os.environ.copy()
+        environment.pop("SECRET_KEY", None)
+        result = subprocess.run(
+            [sys.executable, "-c", "import backend.app.main"],
+            cwd=Path(__file__).resolve().parents[2],
+            env=environment,
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("SECRET_KEY", result.stderr)
+
+    def test_migrations_on_empty_database_support_auth(self):
+        root = Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as directory:
+            url = f"sqlite:///{Path(directory) / 'new.sqlite'}"
+            environment = {**os.environ, "DATABASE_URL": url}
+            subprocess.run(
+                [sys.executable, "-m", "alembic", "upgrade", "head"],
+                cwd=root,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            migrated_engine = create_engine(url, connect_args={"check_same_thread": False})
+            migrated_sessions = sessionmaker(bind=migrated_engine)
+
+            def migrated_db():
+                with migrated_sessions() as db:
+                    yield db
+
+            app.dependency_overrides[get_db] = migrated_db
+            try:
+                response = self.client.post(
+                    "/api/v1/auth/register",
+                    json={"email": "new@example.com", "password": "Password123"},
+                )
+                self.assertEqual(response.status_code, 201, response.text)
+                response = self.client.post(
+                    "/api/v1/auth/login",
+                    json={"email": "new@example.com", "password": "Password123"},
+                )
+                self.assertEqual(response.status_code, 200, response.text)
+                token = response.json()["access_token"]
+                response = self.client.get(
+                    "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
+                )
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertEqual(response.json()["email"], "new@example.com")
+            finally:
+                app.dependency_overrides[get_db] = override_get_db
+                migrated_engine.dispose()
 
     def test_user_cannot_access_admin_route(self):
         headers = self._register_and_login("user@example.com")

@@ -15,6 +15,10 @@ Yêu cầu: Python 3.11+ và Node.js 20+. Mở terminal ở thư mục gốc rep
    # macOS/Linux: source .venv/bin/activate
    python -m pip install -r backend/requirements-dev.txt
    python -m ml.src.train_baseline --data-dir ml/data/raw --output-dir ml/artifacts
+   # Tạo khóa riêng cho máy này, tối thiểu 32 ký tự. Không commit khóa lên Git.
+   # Windows PowerShell: $env:SECRET_KEY="<your-unique-secret-at-least-32-characters>"
+   # macOS/Linux: export SECRET_KEY="<your-unique-secret-at-least-32-characters>"
+   python -m alembic upgrade head
    # Windows PowerShell: $env:MODEL_PATH="ml/artifacts/baseline.joblib"
    # macOS/Linux: export MODEL_PATH=ml/artifacts/baseline.joblib
    uvicorn backend.app.main:app --reload --port 8000
@@ -30,6 +34,8 @@ Yêu cầu: Python 3.11+ và Node.js 20+. Mở terminal ở thư mục gốc rep
 
 Mở `http://localhost:5173`. Tài liệu API ở `http://localhost:8000/docs`. Nếu chưa có `MODEL_PATH`, `/api/v1/analyze` trả `503` thay vì hiển thị kết quả giả.
 
+API yêu cầu `SECRET_KEY` khi khởi động. Dùng cùng một khóa bí mật cho các phiên bản chạy chung tài khoản; đổi khóa sẽ làm token cũ hết hiệu lực. Nếu dùng database khác mặc định, đặt `DATABASE_URL` trước lệnh Alembic và trước khi chạy API. File SQLite local không được commit. Để tạo ADMIN trên database mới, đặt `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong môi trường trước khi khởi động lần đầu; không dùng mật khẩu mẫu ở môi trường triển khai.
+
 ## Cấu trúc
 
 | Thư mục | Chủ trách nhiệm | Nội dung |
@@ -43,7 +49,7 @@ Mở `http://localhost:5173`. Tài liệu API ở `http://localhost:8000/docs`. 
 ## Tình trạng v0
 
 - Đã có: làm sạch dấu Reuters ở mở đầu, lọc dữ liệu trùng chính xác sau làm sạch, baseline Logistic Regression, phép chia train/test cố định, báo cáo Accuracy và F1, API text, giao diện cơ bản.
-- Chưa có: kiểm tra gần trùng, đánh giá theo chủ đề, SVM/Naive Bayes, LSTM, LIME, URL, đăng nhập, lưu lịch sử và triển khai cloud. Xem [bảng công việc](docs/TASK_BOARD.md).
+- Các phần hiện có và chưa có tiếp tục được theo dõi tại [bảng công việc](docs/TASK_BOARD.md); đăng nhập đã có trong API, còn lịch sử và triển khai cloud đang thực hiện.
 - Bộ dữ liệu Kaggle chủ yếu là bài báo tiếng Anh và chứa sai lệch nguồn giữa hai nhãn. Không dùng kết quả v0 để khẳng định độ chính xác đối với mạng xã hội hoặc tiếng Việt.
 
 ## Cộng tác
