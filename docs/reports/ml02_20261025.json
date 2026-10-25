@@ -1,0 +1,444 @@
+{
+  "experiment": "ml-02-topic-holdout-v1",
+  "input_sha256": "64f296e51ae407e73261674b9cd4ebb368971bb9942fa9bd9377a9d22ea06666",
+  "label_map": {
+    "0": "Fake",
+    "1": "Real"
+  },
+  "feature": "text_clean",
+  "classifier": "TF-IDF + LinearSVC (same configuration as ML-01, no tuning)",
+  "articles": 38164,
+  "topic_method": "TF-IDF(text_clean) -> TruncatedSVD -> KMeans(k=10, seed=42); near-duplicate groups kept in one topic",
+  "n_topics": 10,
+  "min_per_label": 100,
+  "topics": [
+    {
+      "topic": 0,
+      "articles": 4326,
+      "fake": 353,
+      "real": 3973,
+      "eligible": true,
+      "reason": "",
+      "top_terms": "al syria iran military state islamic forces syrian united government"
+    },
+    {
+      "topic": 1,
+      "articles": 6391,
+      "fake": 1852,
+      "real": 4539,
+      "eligible": true,
+      "reason": "",
+      "top_terms": "states united administration new china obama house government state white"
+    },
+    {
+      "topic": 2,
+      "articles": 2998,
+      "fake": 1308,
+      "real": 1690,
+      "eligible": true,
+      "reason": "",
+      "top_terms": "russia russian intelligence fbi investigation comey election putin committee house"
+    },
+    {
+      "topic": 3,
+      "articles": 7839,
+      "fake": 7660,
+      "real": 179,
+      "eligible": true,
+      "reason": "",
+      "top_terms": "just people like donald know don right america going white"
+    },
+    {
+      "topic": 4,
+      "articles": 2421,
+      "fake": 769,
+      "real": 1652,
+      "eligible": true,
+      "reason": "",
+      "top_terms": "court supreme judge justice case federal law ruling state legal"
+    },
+    {
+      "topic": 5,
+      "articles": 2999,
+      "fake": 93,
+      "real": 2906,
+      "eligible": false,
+      "reason": "fewer than 100 articles in at least one label",
+      "top_terms": "minister eu european party prime britain parliament government union brexit"
+    },
+    {
+      "topic": 6,
+      "articles": 2756,
+      "fake": 1727,
+      "real": 1029,
+      "eligible": true,
+      "reason": "",
+      "top_terms": "police officers people man arrested black gun old year killed"
+    },
+    {
+      "topic": 7,
+      "articles": 1308,
+      "fake": 109,
+      "real": 1199,
+      "eligible": true,
+      "reason": "",
+      "top_terms": "korea north korean nuclear missile pyongyang china south united sanctions"
+    },
+    {
+      "topic": 8,
+      "articles": 2943,
+      "fake": 579,
+      "real": 2364,
+      "eligible": true,
+      "reason": "",
+      "top_terms": "senate house tax republican republicans legislation obamacare healthcare congress health"
+    },
+    {
+      "topic": 9,
+      "articles": 4183,
+      "fake": 2530,
+      "real": 1653,
+      "eligible": true,
+      "reason": "",
+      "top_terms": "clinton hillary republican presidential campaign candidate election democratic party donald"
+    }
+  ],
+  "evaluated_topics": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    6,
+    7,
+    8,
+    9
+  ],
+  "not_evaluated_topics": [
+    5
+  ],
+  "feasible": true,
+  "folds": [
+    {
+      "articles": 4326,
+      "accuracy": 0.992834,
+      "f1_fake": 0.955524,
+      "f1_macro": 0.975813,
+      "confusion_matrix_rows_fake_real": [
+        [
+          333,
+          20
+        ],
+        [
+          11,
+          3962
+        ]
+      ],
+      "topic": 0,
+      "top_terms": [
+        "al",
+        "syria",
+        "iran",
+        "military",
+        "state",
+        "islamic",
+        "forces",
+        "syrian",
+        "united",
+        "government"
+      ],
+      "fake": 353,
+      "real": 3973
+    },
+    {
+      "articles": 6391,
+      "accuracy": 0.983571,
+      "f1_fake": 0.971583,
+      "f1_macro": 0.980014,
+      "confusion_matrix_rows_fake_real": [
+        [
+          1795,
+          57
+        ],
+        [
+          48,
+          4491
+        ]
+      ],
+      "topic": 1,
+      "top_terms": [
+        "states",
+        "united",
+        "administration",
+        "new",
+        "china",
+        "obama",
+        "house",
+        "government",
+        "state",
+        "white"
+      ],
+      "fake": 1852,
+      "real": 4539
+    },
+    {
+      "articles": 2998,
+      "accuracy": 0.987992,
+      "f1_fake": 0.986228,
+      "f1_macro": 0.987792,
+      "confusion_matrix_rows_fake_real": [
+        [
+          1289,
+          19
+        ],
+        [
+          17,
+          1673
+        ]
+      ],
+      "topic": 2,
+      "top_terms": [
+        "russia",
+        "russian",
+        "intelligence",
+        "fbi",
+        "investigation",
+        "comey",
+        "election",
+        "putin",
+        "committee",
+        "house"
+      ],
+      "fake": 1308,
+      "real": 1690
+    },
+    {
+      "articles": 7839,
+      "accuracy": 0.994897,
+      "f1_fake": 0.997393,
+      "f1_macro": 0.938816,
+      "confusion_matrix_rows_fake_real": [
+        [
+          7652,
+          8
+        ],
+        [
+          32,
+          147
+        ]
+      ],
+      "topic": 3,
+      "top_terms": [
+        "just",
+        "people",
+        "like",
+        "donald",
+        "know",
+        "don",
+        "right",
+        "america",
+        "going",
+        "white"
+      ],
+      "fake": 7660,
+      "real": 179
+    },
+    {
+      "articles": 2421,
+      "accuracy": 0.981826,
+      "f1_fake": 0.971354,
+      "f1_macro": 0.979023,
+      "confusion_matrix_rows_fake_real": [
+        [
+          746,
+          23
+        ],
+        [
+          21,
+          1631
+        ]
+      ],
+      "topic": 4,
+      "top_terms": [
+        "court",
+        "supreme",
+        "judge",
+        "justice",
+        "case",
+        "federal",
+        "law",
+        "ruling",
+        "state",
+        "legal"
+      ],
+      "fake": 769,
+      "real": 1652
+    },
+    {
+      "articles": 2756,
+      "accuracy": 0.984761,
+      "f1_fake": 0.987741,
+      "f1_macro": 0.983803,
+      "confusion_matrix_rows_fake_real": [
+        [
+          1692,
+          35
+        ],
+        [
+          7,
+          1022
+        ]
+      ],
+      "topic": 6,
+      "top_terms": [
+        "police",
+        "officers",
+        "people",
+        "man",
+        "arrested",
+        "black",
+        "gun",
+        "old",
+        "year",
+        "killed"
+      ],
+      "fake": 1727,
+      "real": 1029
+    },
+    {
+      "articles": 1308,
+      "accuracy": 0.990061,
+      "f1_fake": 0.937799,
+      "f1_macro": 0.966199,
+      "confusion_matrix_rows_fake_real": [
+        [
+          98,
+          11
+        ],
+        [
+          2,
+          1197
+        ]
+      ],
+      "topic": 7,
+      "top_terms": [
+        "korea",
+        "north",
+        "korean",
+        "nuclear",
+        "missile",
+        "pyongyang",
+        "china",
+        "south",
+        "united",
+        "sanctions"
+      ],
+      "fake": 109,
+      "real": 1199
+    },
+    {
+      "articles": 2943,
+      "accuracy": 0.994903,
+      "f1_fake": 0.987035,
+      "f1_macro": 0.991932,
+      "confusion_matrix_rows_fake_real": [
+        [
+          571,
+          8
+        ],
+        [
+          7,
+          2357
+        ]
+      ],
+      "topic": 8,
+      "top_terms": [
+        "senate",
+        "house",
+        "tax",
+        "republican",
+        "republicans",
+        "legislation",
+        "obamacare",
+        "healthcare",
+        "congress",
+        "health"
+      ],
+      "fake": 579,
+      "real": 2364
+    },
+    {
+      "articles": 4183,
+      "accuracy": 0.986134,
+      "f1_fake": 0.988569,
+      "f1_macro": 0.985475,
+      "confusion_matrix_rows_fake_real": [
+        [
+          2508,
+          22
+        ],
+        [
+          36,
+          1617
+        ]
+      ],
+      "topic": 9,
+      "top_terms": [
+        "clinton",
+        "hillary",
+        "republican",
+        "presidential",
+        "campaign",
+        "candidate",
+        "election",
+        "democratic",
+        "party",
+        "donald"
+      ],
+      "fake": 2530,
+      "real": 1653
+    }
+  ],
+  "pooled_topic_holdout": {
+    "articles": 35165,
+    "accuracy": 0.98908,
+    "f1_fake": 0.988623,
+    "f1_macro": 0.989062,
+    "confusion_matrix_rows_fake_real": [
+      [
+        16684,
+        203
+      ],
+      [
+        181,
+        18097
+      ]
+    ]
+  },
+  "mean_fold_accuracy": 0.988553,
+  "mean_fold_f1_macro": 0.976541,
+  "worst_topic": {
+    "topic": 3,
+    "f1_macro": 0.938816
+  },
+  "conclusion": "Evaluated 9 of 10 topics; the others lack one label. Compare pooled topic hold-out with the grouped random baseline on the same articles.",
+  "random_group_baseline_same_articles": {
+    "articles": 35165,
+    "accuracy": 0.991838,
+    "f1_fake": 0.991485,
+    "f1_macro": 0.991824,
+    "confusion_matrix_rows_fake_real": [
+      [
+        16709,
+        178
+      ],
+      [
+        109,
+        18169
+      ]
+    ]
+  },
+  "scikit_learn_version": "1.9.1",
+  "pandas_version": "2.3.3",
+  "limitations": "Topics are unsupervised clusters of cleaned article text, not editorial categories; results depend on the number of topics and the random seed. Topic definition fits TF-IDF, SVD and KMeans on all articles without labels; classifiers never see the held-out topic. Source and style confounding can remain inside a topic. Scores describe this English-language dataset only and do not verify the truth of any article."
+}
