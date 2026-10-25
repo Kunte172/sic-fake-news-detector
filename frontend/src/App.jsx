@@ -4,7 +4,6 @@ const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 const TOKEN_KEY = 'sic_access_token'
 const PAGE_LIMIT = 5
 
-
 function FeedbackBox({ scope, analysisId, existingFeedback, token, onFeedbackSaved, onUnauthorized }) {
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -16,11 +15,11 @@ function FeedbackBox({ scope, analysisId, existingFeedback, token, onFeedbackSav
     return (
       <div className="feedback-box">
         <span className={`badge ${existingFeedback.agree ? 'likely' : 'suspicious'}`} style={{ marginLeft: 0 }}>
-          Pháº£n há»“i cá»§a báº¡n: {existingFeedback.agree ? 'Äá»“ng Ã½ vá»›i mÃ´ hÃ¬nh' : 'KhÃ´ng Ä‘á»“ng Ã½'}
+          Phản hồi của bạn: {existingFeedback.agree ? 'Đồng ý với mô hình' : 'Không đồng ý'}
         </span>
         {existingFeedback.comment && (
           <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#a9bec6' }}>
-            Ghi chÃº: â€œ{existingFeedback.comment}â€
+            Ghi chú: “{existingFeedback.comment}”
           </p>
         )}
       </div>
@@ -43,19 +42,19 @@ function FeedbackBox({ scope, analysisId, existingFeedback, token, onFeedbackSav
         body: JSON.stringify(payload),
       })
       if (response.status === 401) {
-        onUnauthorized('PhiÃªn Ä‘Äƒng nháº­p Ä‘Ã£ háº¿t háº¡n. Vui lÃ²ng Ä‘Äƒng nháº­p láº¡i.')
+        onUnauthorized('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
         return
       }
-      if (response.status === 404) throw new Error('KhÃ´ng tÃ¬m tháº¥y lÆ°á»£t phÃ¢n tÃ­ch thuá»™c tÃ i khoáº£n cá»§a báº¡n.')
-      if (response.status === 409) throw new Error('LÆ°á»£t phÃ¢n tÃ­ch nÃ y Ä‘Ã£ Ä‘Æ°á»£c gá»­i pháº£n há»“i trÆ°á»›c Ä‘Ã³.')
-      if (response.status === 422) throw new Error('Nháº­n xÃ©t khÃ´ng Ä‘Æ°á»£c vÆ°á»£t quÃ¡ 1.000 kÃ½ tá»±.')
-      if (!response.ok) throw new Error('KhÃ´ng thá»ƒ gá»­i pháº£n há»“i.')
+      if (response.status === 404) throw new Error('Không tìm thấy lượt phân tích thuộc tài khoản của bạn.')
+      if (response.status === 409) throw new Error('Lượt phân tích này đã được gửi phản hồi trước đó.')
+      if (response.status === 422) throw new Error('Nhận xét không được vượt quá 1.000 ký tự.')
+      if (!response.ok) throw new Error('Không thể gửi phản hồi.')
 
       const fbData = await response.json()
       setComment('')
       onFeedbackSaved(analysisId, fbData)
     } catch (cause) {
-      setError(cause instanceof TypeError ? 'Lá»—i káº¿t ná»‘i API.' : cause.message)
+      setError(cause instanceof TypeError ? 'Lỗi kết nối API.' : cause.message)
     } finally {
       setSubmitting(false)
     }
@@ -65,29 +64,28 @@ function FeedbackBox({ scope, analysisId, existingFeedback, token, onFeedbackSav
 
   return (
     <div className="feedback-box">
-      <label htmlFor={inputId}>ÄÃ¡nh giÃ¡ káº¿t quáº£ phÃ¢n tÃ­ch nÃ y (tÃ¹y chá»n ghi chÃº)</label>
+      <label htmlFor={inputId}>Đánh giá kết quả phân tích này (tùy chọn ghi chú)</label>
       <input
         id={inputId}
         type="text"
         maxLength={1000}
-        placeholder="Nháº­p lÃ½ do Ä‘á»“ng Ã½ hoáº·c pháº£n Ä‘á»‘i (tá»‘i Ä‘a 1.000 kÃ½ tá»±)..."
+        placeholder="Nhập lý do đồng ý hoặc phản đối (tối đa 1.000 ký tự)..."
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         disabled={submitting}
       />
       <div className="feedback-actions">
         <button type="button" className="small" disabled={submitting} onClick={() => handleSubmit(true)}>
-          {submitting ? 'Äang gá»­i...' : 'ðŸ‘ Äá»“ng Ã½'}
+          {submitting ? 'Đang gửi...' : '👍 Đồng ý'}
         </button>
         <button type="button" className="small secondary" disabled={submitting} onClick={() => handleSubmit(false)}>
-          {submitting ? 'Äang gá»­i...' : 'ðŸ‘Ž KhÃ´ng Ä‘á»“ng Ã½'}
+          {submitting ? 'Đang gửi...' : '👎 Không đồng ý'}
         </button>
       </div>
       {error && <div className="notice error" style={{ marginTop: '10px', marginBottom: 0 }}>{error}</div>}
     </div>
   )
 }
-
 
 function AuthPanel({ user, onLoginSuccess, onLogout, authError, setAuthError }) {
   const [authMode, setAuthMode] = useState('login')
@@ -98,15 +96,15 @@ function AuthPanel({ user, onLoginSuccess, onLogout, authError, setAuthError }) 
 
   if (user) {
     return (
-      <section className="panel" aria-label="TÃ i khoáº£n ngÆ°á»i dÃ¹ng">
+      <section className="panel" aria-label="Tài khoản người dùng">
         <div className="user-bar">
           <div>
-            <p className="eyebrow">TÃ€I KHOáº¢N ÄANG ÄÄ‚NG NHáº¬P</p>
+            <p className="eyebrow">TÀI KHOẢN ĐANG ĐĂNG NHẬP</p>
             <strong>{user.email}</strong>
             <span className="badge">{user.role}</span>
           </div>
           <button type="button" className="danger small" onClick={() => onLogout()}>
-            ÄÄƒng xuáº¥t
+            Đăng xuất
           </button>
         </div>
       </section>
@@ -126,10 +124,10 @@ function AuthPanel({ user, onLoginSuccess, onLogout, authError, setAuthError }) 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: email.trim(), password }),
         })
-        if (regRes.status === 400) throw new Error('Email nÃ y Ä‘Ã£ Ä‘Æ°á»£c Ä‘Äƒng kÃ½.')
-        if (regRes.status === 422) throw new Error('Email khÃ´ng há»£p lá»‡ hoáº·c máº­t kháº©u khÃ´ng Ä‘Ãºng chuáº©n (6â€“72 kÃ½ tá»±).')
-        if (!regRes.ok) throw new Error('ÄÄƒng kÃ½ tháº¥t báº¡i. Vui lÃ²ng thá»­ láº¡i.')
-        setSuccessMsg('ÄÄƒng kÃ½ thÃ nh cÃ´ng! Äang tá»± Ä‘á»™ng Ä‘Äƒng nháº­p...')
+        if (regRes.status === 400) throw new Error('Email này đã được đăng ký.')
+        if (regRes.status === 422) throw new Error('Email không hợp lệ hoặc mật khẩu không đúng chuẩn (6–72 ký tự).')
+        if (!regRes.ok) throw new Error('Đăng ký thất bại. Vui lòng thử lại.')
+        setSuccessMsg('Đăng ký thành công! Đang tự động đăng nhập...')
       }
 
       const loginRes = await fetch(`${apiBase}/api/v1/auth/login`, {
@@ -137,27 +135,27 @@ function AuthPanel({ user, onLoginSuccess, onLogout, authError, setAuthError }) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
       })
-      if (loginRes.status === 401) throw new Error('Sai email hoáº·c máº­t kháº©u.')
-      if (loginRes.status === 422) throw new Error('Vui lÃ²ng nháº­p Ä‘Ãºng Ä‘á»‹nh dáº¡ng email vÃ  máº­t kháº©u.')
-      if (!loginRes.ok) throw new Error('ÄÄƒng nháº­p tháº¥t báº¡i. Vui lÃ²ng thá»­ láº¡i.')
+      if (loginRes.status === 401) throw new Error('Sai email hoặc mật khẩu.')
+      if (loginRes.status === 422) throw new Error('Vui lòng nhập đúng định dạng email và mật khẩu.')
+      if (!loginRes.ok) throw new Error('Đăng nhập thất bại. Vui lòng thử lại.')
 
       const loginData = await loginRes.json()
       setPassword('')
       setSuccessMsg('')
       onLoginSuccess(loginData.access_token)
     } catch (cause) {
-      setAuthError(cause instanceof TypeError ? 'KhÃ´ng káº¿t ná»‘i Ä‘Æ°á»£c API. HÃ£y khá»Ÿi cháº¡y backend.' : cause.message)
+      setAuthError(cause instanceof TypeError ? 'Không kết nối được API. Hãy khởi chạy backend.' : cause.message)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <section className="panel" aria-label="TÃ i khoáº£n ngÆ°á»i dÃ¹ng">
+    <section className="panel" aria-label="Tài khoản người dùng">
       <div className="auth-header">
         <div>
-          <p className="eyebrow">XÃC THá»°C NGÆ¯á»œI DÃ™NG</p>
-          <h2 style={{ margin: 0 }}>{authMode === 'login' ? 'ÄÄƒng nháº­p' : 'ÄÄƒng kÃ½ tÃ i khoáº£n má»›i'}</h2>
+          <p className="eyebrow">XÁC THỰC NGƯỜI DÙNG</p>
+          <h2 style={{ margin: 0 }}>{authMode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản mới'}</h2>
         </div>
         <div className="auth-tabs">
           <button
@@ -165,14 +163,14 @@ function AuthPanel({ user, onLoginSuccess, onLogout, authError, setAuthError }) 
             className={`small ${authMode === 'login' ? '' : 'secondary'}`}
             onClick={() => { setAuthMode('login'); setAuthError(''); setSuccessMsg('') }}
           >
-            ÄÄƒng nháº­p
+            Đăng nhập
           </button>
           <button
             type="button"
             className={`small ${authMode === 'register' ? '' : 'secondary'}`}
             onClick={() => { setAuthMode('register'); setAuthError(''); setSuccessMsg('') }}
           >
-            ÄÄƒng kÃ½
+            Đăng ký
           </button>
         </div>
       </div>
@@ -194,21 +192,21 @@ function AuthPanel({ user, onLoginSuccess, onLogout, authError, setAuthError }) 
           />
         </div>
         <div>
-          <label htmlFor="auth-password">Máº­t kháº©u (tá»‘i thiá»ƒu 6 kÃ½ tá»±)</label>
+          <label htmlFor="auth-password">Mật khẩu (tối thiểu 6 ký tự)</label>
           <input
             id="auth-password"
             type="password"
             required
             minLength={6}
             maxLength={72}
-            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
           />
         </div>
         <button type="submit" disabled={loading}>
-          {loading ? 'Äang xá»­ lÃ½...' : authMode === 'login' ? 'ÄÄƒng nháº­p' : 'Táº¡o tÃ i khoáº£n'}
+          {loading ? 'Đang xử lý...' : authMode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}
         </button>
       </form>
     </section>
@@ -230,7 +228,6 @@ export default function App() {
   const [historyOffset, setHistoryOffset] = useState(0)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
-
 
   const activeTokenRef = useRef(token)
   activeTokenRef.current = token
@@ -266,14 +263,13 @@ export default function App() {
         `${apiBase}/api/v1/analyses?limit=${PAGE_LIMIT}&offset=${nextOffset}`,
         { headers: { Authorization: `Bearer ${requestToken}` }, signal }
       )
-      // Náº¿u trong lÃºc Ä‘á»£i máº¡ng, ngÆ°á»i dÃ¹ng Ä‘Ã£ Ä‘Äƒng xuáº¥t hoáº·c Ä‘á»•i sang token khÃ¡c -> bá» qua káº¿t quáº£ cÅ©
       if (activeTokenRef.current !== requestToken) return
 
       if (response.status === 401) {
-        clearSession('PhiÃªn Ä‘Äƒng nháº­p khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n.')
+        clearSession('Phiên đăng nhập không hợp lệ hoặc đã hết hạn.')
         return
       }
-      if (!response.ok) throw new Error('KhÃ´ng thá»ƒ táº£i lá»‹ch sá»­ phÃ¢n tÃ­ch.')
+      if (!response.ok) throw new Error('Không thể tải lịch sử phân tích.')
       const data = await response.json()
       if (activeTokenRef.current !== requestToken) return
 
@@ -282,7 +278,7 @@ export default function App() {
       setHistoryOffset(data.offset || 0)
     } catch (cause) {
       if (cause.name === 'AbortError' || activeTokenRef.current !== requestToken) return
-      setHistoryError(cause instanceof TypeError ? 'KhÃ´ng káº¿t ná»‘i Ä‘Æ°á»£c API.' : cause.message)
+      setHistoryError(cause instanceof TypeError ? 'Không kết nối được API.' : cause.message)
     } finally {
       if (activeTokenRef.current === requestToken) {
         setHistoryLoading(false)
@@ -310,10 +306,10 @@ export default function App() {
         if (activeTokenRef.current !== currentToken) return
 
         if (meRes.status === 401) {
-          clearSession('PhiÃªn Ä‘Äƒng nháº­p Ä‘Ã£ háº¿t háº¡n. Vui lÃ²ng Ä‘Äƒng nháº­p láº¡i.')
+          clearSession('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
           return
         }
-        if (!meRes.ok) throw new Error('KhÃ´ng thá»ƒ táº£i thÃ´ng tin tÃ i khoáº£n.')
+        if (!meRes.ok) throw new Error('Không thể tải thông tin tài khoản.')
         const meData = await meRes.json()
         if (activeTokenRef.current !== currentToken) return
 
@@ -321,7 +317,7 @@ export default function App() {
         await fetchHistory(currentToken, 0, controller.signal)
       } catch (cause) {
         if (cause.name === 'AbortError' || activeTokenRef.current !== currentToken) return
-        setAuthError(cause instanceof TypeError ? 'KhÃ´ng káº¿t ná»‘i Ä‘Æ°á»£c API.' : cause.message)
+        setAuthError(cause instanceof TypeError ? 'Không kết nối được API.' : cause.message)
       }
     }
 
@@ -345,12 +341,12 @@ export default function App() {
         body: JSON.stringify({ text }),
       })
       if (response.status === 401) {
-        clearSession('PhiÃªn Ä‘Äƒng nháº­p Ä‘Ã£ háº¿t háº¡n. Vui lÃ²ng Ä‘Äƒng nháº­p láº¡i.')
-        throw new Error('PhiÃªn Ä‘Äƒng nháº­p khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n (401).')
+        clearSession('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+        throw new Error('Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401).')
       }
-      if (response.status === 503) throw new Error('ChÆ°a cÃ³ mÃ´ hÃ¬nh. HÃ£y huáº¥n luyá»‡n baseline vÃ  cáº¥u hÃ¬nh MODEL_PATH theo README.')
-      if (response.status === 422) throw new Error('Vui lÃ²ng nháº­p bÃ i bÃ¡o tiáº¿ng Anh tá»« 80 Ä‘áº¿n 50.000 kÃ½ tá»±.')
-      if (!response.ok) throw new Error('KhÃ´ng thá»ƒ phÃ¢n tÃ­ch. HÃ£y kiá»ƒm tra API vÃ  thá»­ láº¡i.')
+      if (response.status === 503) throw new Error('Chưa có mô hình. Hãy huấn luyện baseline và cấu hình MODEL_PATH theo README.')
+      if (response.status === 422) throw new Error('Vui lòng nhập bài báo tiếng Anh từ 80 đến 50.000 ký tự.')
+      if (!response.ok) throw new Error('Không thể phân tích. Hãy kiểm tra API và thử lại.')
 
       const data = await response.json()
       if (activeTokenRef.current !== requestToken) return
@@ -360,7 +356,7 @@ export default function App() {
         await fetchHistory(requestToken, 0)
       }
     } catch (cause) {
-      setError(cause instanceof TypeError ? 'KhÃ´ng káº¿t ná»‘i Ä‘Æ°á»£c API. HÃ£y khá»Ÿi cháº¡y backend.' : cause.message)
+      setError(cause instanceof TypeError ? 'Không kết nối được API. Hãy khởi chạy backend.' : cause.message)
     } finally {
       setLoading(false)
     }
@@ -375,14 +371,14 @@ export default function App() {
     <main className="shell">
       <header className="header">
         <span className="brand">SIC / FAKE NEWS LENS</span>
-        <span className="tag">Äá»“ Ã¡n nhÃ³m Â· v0</span>
+        <span className="tag">Đồ án nhóm · v0</span>
       </header>
 
       <section className="hero">
-        <p className="eyebrow">Xá»¬ LÃ NGÃ”N NGá»® Tá»° NHIÃŠN</p>
-        <h1>SÃ ng lá»c dáº¥u hiá»‡u Ä‘Ã¡ng ngá» trong bÃ i bÃ¡o.</h1>
+        <p className="eyebrow">XỬ LÝ NGÔN NGỮ TỰ NHIÊN</p>
+        <h1>Sàng lọc dấu hiệu đáng ngờ trong bài báo.</h1>
         <p className="lead">
-          DÃ¡n ná»™i dung bÃ i bÃ¡o tiáº¿ng Anh Ä‘á»ƒ xem Ä‘iá»ƒm dá»± Ä‘oÃ¡n cá»§a mÃ´ hÃ¬nh. Káº¿t quáº£ chá»‰ há»— trá»£ lá»±a chá»n thÃ´ng tin cáº§n kiá»ƒm tra thÃªm.
+          Dán nội dung bài báo tiếng Anh để xem điểm dự đoán của mô hình. Kết quả chỉ hỗ trợ lựa chọn thông tin cần kiểm tra thêm.
         </p>
       </section>
 
@@ -395,7 +391,7 @@ export default function App() {
       />
 
       <form className="panel" onSubmit={analyze}>
-        <label htmlFor="article">Ná»™i dung bÃ i bÃ¡o</label>
+        <label htmlFor="article">Nội dung bài báo</label>
         <textarea
           id="article"
           value={text}
@@ -407,11 +403,11 @@ export default function App() {
         />
         <div className="form-footer">
           <span>
-            {text.length.toLocaleString('vi-VN')} / 50.000 kÃ½ tá»±
-            {!user && ' Â· (ChÆ°a Ä‘Äƒng nháº­p: káº¿t quáº£ khÃ´ng lÆ°u vÃ o lá»‹ch sá»­)'}
+            {text.length.toLocaleString('vi-VN')} / 50.000 ký tự
+            {!user && ' · (Chưa đăng nhập: kết quả không lưu vào lịch sử)'}
           </span>
           <button disabled={loading || text.length < 80}>
-            {loading ? 'Äang phÃ¢n tÃ­ch...' : 'PhÃ¢n tÃ­ch vÄƒn báº£n'}
+            {loading ? 'Đang phân tích...' : 'Phân tích văn bản'}
           </button>
         </div>
       </form>
@@ -420,13 +416,13 @@ export default function App() {
 
       {result && (
         <section className="panel result" aria-live="polite">
-          <p className="eyebrow">Káº¾T QUáº¢ MÃ” HÃŒNH Â· {result.model_version}</p>
-          <h2>{result.label === 'SUSPICIOUS' ? 'Cáº§n kiá»ƒm tra thÃªm' : 'Ãt dáº¥u hiá»‡u Ä‘Ã¡ng ngá» hÆ¡n'}</h2>
+          <p className="eyebrow">KẾT QUẢ MÔ HÌNH · {result.model_version}</p>
+          <h2>{result.label === 'SUSPICIOUS' ? 'Cần kiểm tra thêm' : 'Ít dấu hiệu đáng ngờ hơn'}</h2>
           <p className="score">
-            {Math.round(result.score * 100)}% <small>Ä‘iá»ƒm lá»›p â€œfakeâ€ trÃªn bá»™ dá»¯ liá»‡u huáº¥n luyá»‡n</small>
+            {Math.round(result.score * 100)}% <small>điểm lớp “fake” trên bộ dữ liệu huấn luyện</small>
           </p>
           <p>
-            Äiá»ƒm nÃ y khÃ´ng pháº£i xÃ¡c suáº¥t bÃ i bÃ¡o sai sá»± tháº­t. HÃ£y Ä‘á»‘i chiáº¿u tÃ¡c giáº£, nguá»“n, thá»i Ä‘iá»ƒm vÃ  báº±ng chá»©ng Ä‘á»™c láº­p.
+            Điểm này không phải xác suất bài báo sai sự thật. Hãy đối chiếu tác giả, nguồn, thời điểm và bằng chứng độc lập.
           </p>
           {user && result.id && (
             <FeedbackBox
@@ -442,11 +438,11 @@ export default function App() {
       )}
 
       {user && (
-        <section className="panel" aria-label="Lá»‹ch sá»­ phÃ¢n tÃ­ch cÃ¡ nhÃ¢n">
+        <section className="panel" aria-label="Lịch sử phân tích cá nhân">
           <div className="auth-header">
             <div>
-              <p className="eyebrow">Dá»® LIá»†U CÃ NHÃ‚N ({user.email})</p>
-              <h2 style={{ margin: 0 }}>Lá»‹ch sá»­ phÃ¢n tÃ­ch ({historyTotal})</h2>
+              <p className="eyebrow">DỮ LIỆU CÁ NHÂN ({user.email})</p>
+              <h2 style={{ margin: 0 }}>Lịch sử phân tích ({historyTotal})</h2>
             </div>
             <button
               type="button"
@@ -454,17 +450,17 @@ export default function App() {
               disabled={historyLoading}
               onClick={() => fetchHistory(token, historyOffset)}
             >
-              {historyLoading ? 'Äang táº£i...' : 'LÃ m má»›i'}
+              {historyLoading ? 'Đang tải...' : 'Làm mới'}
             </button>
           </div>
 
           {historyError && <div className="notice error" role="alert">{historyError}</div>}
 
           {historyLoading && history.length === 0 ? (
-            <p style={{ color: '#9fb4bd' }}>Äang táº£i lá»‹ch sá»­ phÃ¢n tÃ­ch...</p>
+            <p style={{ color: '#9fb4bd' }}>Đang tải lịch sử phân tích...</p>
           ) : history.length === 0 ? (
             <p style={{ color: '#9fb4bd' }}>
-              TÃ i khoáº£n cá»§a báº¡n chÆ°a cÃ³ lÆ°á»£t phÃ¢n tÃ­ch nÃ o.
+              Tài khoản của bạn chưa có lượt phân tích nào.
             </p>
           ) : (
             <div className="history-list">
@@ -472,14 +468,14 @@ export default function App() {
                 <article key={item.id} className="history-item">
                   <div className="history-meta">
                     <span>
-                      <strong>#{item.id}</strong> Â· {new Date(item.created_at).toLocaleString('vi-VN')} Â·{' '}
+                      <strong>#{item.id}</strong> · {new Date(item.created_at).toLocaleString('vi-VN')} ·{' '}
                       <code>{item.model_version}</code>
                     </span>
                     <span className={`badge ${item.label === 'SUSPICIOUS' ? 'suspicious' : 'likely'}`}>
                       {item.label} ({Math.round(item.score * 100)}%)
                     </span>
                   </div>
-                  <p className="history-preview">â€œ{item.content_preview}â€</p>
+                  <p className="history-preview">“{item.content_preview}”</p>
                   <FeedbackBox
                     scope="history"
                     analysisId={item.id}
@@ -496,7 +492,7 @@ export default function App() {
           {historyTotal > PAGE_LIMIT && (
             <div className="pagination">
               <span>
-                Hiá»ƒn thá»‹ {historyOffset + 1}â€“{Math.min(historyOffset + history.length, historyTotal)} / {historyTotal}
+                Hiển thị {historyOffset + 1}–{Math.min(historyOffset + history.length, historyTotal)} / {historyTotal}
               </span>
               <div className="auth-tabs">
                 <button
@@ -505,7 +501,7 @@ export default function App() {
                   disabled={historyLoading || historyOffset === 0}
                   onClick={() => fetchHistory(token, Math.max(0, historyOffset - PAGE_LIMIT))}
                 >
-                  â† Trang trÆ°á»›c
+                  ← Trang trước
                 </button>
                 <button
                   type="button"
@@ -513,7 +509,7 @@ export default function App() {
                   disabled={historyLoading || historyOffset + PAGE_LIMIT >= historyTotal}
                   onClick={() => fetchHistory(token, historyOffset + PAGE_LIMIT)}
                 >
-                  Trang sau â†’
+                  Trang sau →
                 </button>
               </div>
             </div>
@@ -522,7 +518,7 @@ export default function App() {
       )}
 
       <footer>
-        Pháº¡m vi v0: bÃ i bÃ¡o tiáº¿ng Anh Â· ÄÃ£ há»— trá»£ tÃ i khoáº£n, lá»‹ch sá»­ vÃ  pháº£n há»“i; chÆ°a há»— trá»£ URL vÃ  LIME Â· KhÃ´ng dÃ¹ng Ä‘á»ƒ Ä‘Æ°a ra káº¿t luáº­n tá»± Ä‘á»™ng
+        Phạm vi v0: bài báo tiếng Anh · Đã hỗ trợ tài khoản, lịch sử và phản hồi; chưa hỗ trợ URL và LIME · Không dùng để đưa ra kết luận tự động
       </footer>
     </main>
   )
