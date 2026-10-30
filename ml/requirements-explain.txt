@@ -1,0 +1,4 @@
+-r ../backend/requirements-dev.txt
+# LIME cho ML-04. Kéo theo matplotlib/scikit-image nên chưa thêm vào backend/requirements-dev.txt;
+# test LIME thật tự bỏ qua khi chưa cài.
+lime==0.2.0.1
