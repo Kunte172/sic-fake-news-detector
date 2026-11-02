@@ -1,0 +1,4 @@
+# Python 3.10+; DATA-02 preprocessing is imported from the existing repository.
+datasketch==2.0.0
+numpy==2.1.3
+scipy==1.15.3
