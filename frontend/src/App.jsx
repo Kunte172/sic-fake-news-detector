@@ -4,7 +4,7 @@ const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 const TOKEN_KEY = 'sic_access_token'
 const PAGE_LIMIT = 5
 
-function FeedbackBox({ scope, analysisId, existingFeedback, token, onFeedbackSaved, onUnauthorized }) {
+function FeedbackBox({ scope, analysisId, existingFeedback, token, onFeedbackSaved, onUnauthorized, isSessionCurrent }) {
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -41,6 +41,7 @@ function FeedbackBox({ scope, analysisId, existingFeedback, token, onFeedbackSav
         },
         body: JSON.stringify(payload),
       })
+      if (!isSessionCurrent()) return
       if (response.status === 401) {
         onUnauthorized('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
         return
@@ -51,9 +52,11 @@ function FeedbackBox({ scope, analysisId, existingFeedback, token, onFeedbackSav
       if (!response.ok) throw new Error('Không thể gửi phản hồi.')
 
       const fbData = await response.json()
+      if (!isSessionCurrent()) return
       setComment('')
       onFeedbackSaved(analysisId, fbData)
     } catch (cause) {
+      if (!isSessionCurrent()) return
       setError(cause instanceof TypeError ? 'Lỗi kết nối API.' : cause.message)
     } finally {
       setSubmitting(false)
@@ -340,6 +343,7 @@ export default function App() {
         headers,
         body: JSON.stringify({ text }),
       })
+      if (activeTokenRef.current !== requestToken) return
       if (response.status === 401) {
         clearSession('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
         throw new Error('Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401).')
@@ -356,6 +360,7 @@ export default function App() {
         await fetchHistory(requestToken, 0)
       }
     } catch (cause) {
+      if (activeTokenRef.current !== requestToken) return
       setError(cause instanceof TypeError ? 'Không kết nối được API. Hãy khởi chạy backend.' : cause.message)
     } finally {
       setLoading(false)
@@ -432,6 +437,7 @@ export default function App() {
               token={token}
               onFeedbackSaved={handleFeedbackSaved}
               onUnauthorized={clearSession}
+              isSessionCurrent={() => activeTokenRef.current === token}
             />
           )}
         </section>
@@ -483,6 +489,7 @@ export default function App() {
                     token={token}
                     onFeedbackSaved={handleFeedbackSaved}
                     onUnauthorized={clearSession}
+              isSessionCurrent={() => activeTokenRef.current === token}
                   />
                 </article>
               ))}
