@@ -19,4 +19,42 @@ Base URL local: `http://localhost:8000`. JSON UTF-8.
 
 - `POST /api/v1/analyses` nhận **một trong hai** `text`/`url`, trả id, nguồn đầu vào, điểm, phiên bản model và giải thích. Cần đăng nhập.
 
+## Giải thích dự đoán — ML-04 (đề xuất, chưa nối vào API)
+
+Module `ml/src/explain.py` (`Explainer.analyze`) trả đúng hình dạng dưới đây. Khi `/api/v1/analyze` chuyển sang artifact ML-01, phản hồi giữ các trường hiện có (`id`, `label`, `score`, `model_version`) và **thêm** object `explanation`:
+
+```json
+{
+  "id": 1,
+  "label": "SUSPICIOUS",
+  "score": 0.9312,
+  "model_version": "ml-01-audited-classic-models-v1:linear_svm",
+  "explanation": {
+    "schema_version": "1.0",
+    "method": "lime",
+    "model_version": "ml-01-audited-classic-models-v1:linear_svm",
+    "score_kind": "calibrated_fake_score",
+    "terms": [
+      {"term": "hoax", "weight": 0.0412, "direction": "toward_fake", "global_weight": 1.8231},
+      {"term": "minister", "weight": -0.0275, "direction": "toward_real", "global_weight": -1.2044}
+    ],
+    "fidelity": 0.83,
+    "num_samples": 1000,
+    "seed": 42,
+    "note": "Giải thích hiển thị theo từ đơn; mô hình còn dùng cặp từ liên tiếp ...",
+    "disclaimer": "Đây là lý do mô hình đưa ra dự đoán ... không phải bằng chứng sự kiện đúng hay sai ..."
+  }
+}
+```
+
+- `label`: `SUSPICIOUS` khi mô hình dự đoán lớp Fake, ngược lại `LESS_SUSPICIOUS` (khớp `backend/app/inference.py`). Nhãn lấy từ `predict` của mô hình, khớp số liệu ML-01.
+- `score`: điểm lớp Fake. Với Linear SVM là điểm **đã hiệu chỉnh** (Platt scaling fit trên validation, `score_kind = calibrated_fake_score`); không phải `decision_function` thô và không phải xác suất sự kiện sai sự thật. Điểm hiệu chỉnh và nhãn có thể lệch ở vùng gần 0,5 (ví dụ điểm 0,55 vẫn đi với `LESS_SUSPICIOUS`; 8/3.803 bài test): **nhãn là kết quả chính thức**, UI/API không tự suy nhãn từ điểm.
+- `terms[].weight` > 0: từ đẩy dự đoán về Fake; < 0: về Real (ảnh hưởng **cục bộ** của LIME quanh bài này). `global_weight`: hệ số của từ trong mô hình (dương = nghiêng Fake), `null` nếu từ ngoài từ vựng.
+- `fidelity`: R² của xấp xỉ cục bộ. Giá trị thấp nghĩa là giải thích kém tin cậy (thường gặp khi điểm gần 0 hoặc 1); UI phải cảnh báo, không trình bày danh sách từ như lý do chắc chắn.
+- Văn bản được loại dấu nguồn bằng `clean_colab_text` **một lần** trước khi dự đoán; API không làm sạch thêm. Luồng ML-01 dùng nhãn **0 = Fake, 1 = Real**; mã nhãn Fake đọc từ `label_map` trong `ml01_report.json`, không suy ra từ số.
+- Không lưu hay trả nguyên văn bài trong `explanation`. Văn bản rỗng sau làm sạch → HTTP 422; chưa nạp artifact hoặc hiệu chỉnh → HTTP 503.
+- **Lưu ý khi nối vào API:** `backend/app/inference.py` (`Predictor`) hiện cố định lớp Fake = 1, gọi `predict_proba` và đặt nhãn theo `score >= 0.5`. Vì vậy **không đặt `MODEL_PATH` trỏ tới artifact ML-01** (Linear SVM, Fake = 0, không có `predict_proba`). Khi chuyển `/analyze` sang ML-01, dùng `Explainer.analyze()`: nhãn lấy từ `predict` của mô hình (khớp số liệu ML-01), điểm là điểm đã hiệu chỉnh.
+- UI **bắt buộc** hiển thị `disclaimer` cạnh phần giải thích và dùng cách nói "lý do mô hình dự đoán", không dùng "bằng chứng".
+- Lịch sử `GET /api/v1/analyses` hiện chỉ lưu `label`, `score`, `model_version` và `content_preview`, **chưa** có `explanation`. Muốn xem lại giải thích trong lịch sử thì cần lưu object này (chỉ từ khóa, không nguyên văn bài) hoặc tính lại theo yêu cầu; quyết định ở issue tiếp theo.
+
 Tài liệu này là nơi thống nhất hợp đồng trước khi code. Không gửi `user_id` từ client để quyết định quyền sở hữu; API lấy từ phiên đăng nhập. Không coi phản hồi đồng ý/không đồng ý là nhãn thật/giả.
