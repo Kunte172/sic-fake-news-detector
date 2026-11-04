@@ -40,7 +40,7 @@ class Api02Tests(unittest.TestCase):
         self.predictor = patch("backend.app.main.predictor")
         self.model = self.predictor.start().return_value
         self.model.ready = True
-        self.model.predict.return_value = ("SUSPICIOUS", 0.85)
+        self.model.analyze.return_value = dict(label="SUSPICIOUS", score=0.85, model_version="test-linear", score_kind="model_probability", explanation=None)
 
     def tearDown(self):
         self.predictor.stop()
@@ -70,6 +70,7 @@ class Api02Tests(unittest.TestCase):
         alice_history = self.client.get("/api/v1/analyses?limit=1&offset=0", headers=alice)
         self.assertEqual(alice_history.status_code, 200)
         self.assertEqual(alice_history.json()["total"], 1)
+        self.assertEqual(alice_history.json()["items"][0]["model_version"], "test-linear")
         self.assertEqual([row["id"] for row in alice_history.json()["items"]], [alice_id])
         self.assertEqual(self.client.get("/api/v1/analyses", headers=bob).json()["items"][0]["id"], bob_id)
         self.assertEqual(self.client.get("/api/v1/analyses").status_code, 401)
