@@ -429,6 +429,24 @@ export default function App() {
           <p>
             Điểm này không phải xác suất bài báo sai sự thật. Hãy đối chiếu tác giả, nguồn, thời điểm và bằng chứng độc lập.
           </p>
+          {result.explanation && (
+            <div className="explanation">
+              <h3>Lý do mô hình dự đoán</h3>
+              <p>{result.explanation.disclaimer}</p>
+              <p>Đóng góp vào margin tuyến tính, không phải phần trăm hay bằng chứng sự thật. Dương: về Fake; âm: về Real.</p>
+              <ul>{result.explanation.terms.map((item) => (
+                <li key={item.term}><strong>{item.term}</strong>: {item.value.toFixed(4)}</li>
+              ))}</ul>
+              <small>Margin Fake: {result.explanation.fake_margin.toFixed(4)} · hệ số chặn: {result.explanation.intercept.toFixed(4)} · phần còn lại: {result.explanation.other_contribution.toFixed(4)}</small>
+              {result.explanation.lime && (
+                <div>
+                  <h4>LIME (xấp xỉ cục bộ)</h4>
+                  <p>Fidelity: {String(result.explanation.lime.fidelity)}. {result.explanation.lime.fidelity == null || result.explanation.lime.fidelity < 0.5 ? 'Giải thích có độ tin cậy thấp; không nên dựa vào các từ này để kết luận.' : 'Đây vẫn là xấp xỉ hành vi mô hình.'}</p>
+                  <ul>{result.explanation.lime.terms.map((item) => <li key={item.term}>{item.term}: {item.weight.toFixed(4)}</li>)}</ul>
+                </div>
+              )}
+            </div>
+          )}
           {user && result.id && (
             <FeedbackBox
               scope="result"
