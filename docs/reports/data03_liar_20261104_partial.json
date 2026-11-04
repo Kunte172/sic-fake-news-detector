@@ -1,0 +1,109 @@
+{
+  "dataset": "DATA03-LIAR-v1",
+  "source_url": "https://www.cs.ucsb.edu/~william/data/liar_dataset.zip",
+  "upstream_release": "2017-04-23",
+  "archive_sha256": "611c1addad919743dde15822b87a60bfb760d8f85597f25289e34621800654c7",
+  "created_at_utc": "2026-11-04T08:00:34.876914+00:00",
+  "python_version": "3.12.14",
+  "original_rows": 12791,
+  "original_label_counts": {
+    "train": {
+      "barely-true": 1654,
+      "false": 1995,
+      "half-true": 2114,
+      "mostly-true": 1962,
+      "pants-fire": 839,
+      "true": 1676
+    },
+    "validation": {
+      "barely-true": 237,
+      "false": 263,
+      "half-true": 248,
+      "mostly-true": 251,
+      "pants-fire": 116,
+      "true": 169
+    },
+    "test": {
+      "barely-true": 212,
+      "false": 249,
+      "half-true": 265,
+      "mostly-true": 241,
+      "pants-fire": 92,
+      "true": 208
+    }
+  },
+  "empty_statements": 0,
+  "binary_mapping": {
+    "true": 1,
+    "false": 0,
+    "pants-fire": 0
+  },
+  "deferred_labels": [
+    "barely-true",
+    "half-true",
+    "mostly-true"
+  ],
+  "binary_rows": 5571,
+  "binary_counts": {
+    "train": {
+      "0": 2813,
+      "1": 1671
+    },
+    "validation": {
+      "0": 373,
+      "1": 169
+    },
+    "test": {
+      "0": 338,
+      "1": 207
+    }
+  },
+  "excluded_rows": 7220,
+  "exclusion_reasons_nonexclusive": {
+    "exact_duplicate_within_group": 26,
+    "group_crosses_official_splits": 26,
+    "group_has_conflicting_six_way_labels": 16,
+    "intermediate_label_not_mapped": 7184
+  },
+  "duplicate_group_count": 29,
+  "cross_split_group_count": 12,
+  "six_label_conflict_group_count": 7,
+  "near_duplicate_parameters": {
+    "shingle_words": 5,
+    "lsh_threshold": 0.7,
+    "jaccard_threshold": 0.85,
+    "num_perm": 128,
+    "seed": 42
+  },
+  "data02_overlap_checked": false,
+  "data02_rows": 0,
+  "data02_sha256": null,
+  "data02_matching_liar_ids": 0,
+  "data02_overlap_pairs": 0,
+  "model_view_cross_split_check": "passed",
+  "model_feature_columns": [
+    "text"
+  ],
+  "training_performed": false,
+  "limitations": [
+    "2017 historical claim dataset; not current news and not full articles.",
+    "Strict binary subset is a new project protocol, not the official six-way LIAR benchmark.",
+    "Labels inherited from LIAR; original fact-check evidence has not been reverified per row.",
+    "No per-row publication date or verified live evidence URL in the original archive.",
+    "LSH retrieval is approximate; whole-text Jaccard does not detect semantic overlap or claim containment.",
+    "DATA-02 comparison covers the supplied prepared snapshot only, not every prior training artifact.",
+    "Speaker overlap and political-domain bias remain; no speaker-disjoint evaluation claimed.",
+    "Research use only per upstream README; original publishers retain copyright."
+  ],
+  "output_sha256": {
+    "UPSTREAM_README.txt": "b995fd7caf6794b32fe934e7bbde115bacf7d376a407602595b4cab45f921b64",
+    "data02_overlap.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "excluded_review.jsonl": "ed1f51bf51b44267871acc821cdd79adccfd9feb738f2b3371d87e72f86867d7",
+    "format_warnings.jsonl": "efcad22af21b907eed40b1431eb80154b89f563283f503f0d9d9d2d12879cf6c",
+    "liar_binary_strict.jsonl": "6842827be66e67c74159275ce44caf4f5f010d3c076747f238f3ab4e4b5d85e4",
+    "liar_original_six_labels.jsonl": "24828dc22c8d01cdac9238758f73b684e515697c36bc2d0bdfa4e34fc2812512",
+    "near_pairs.jsonl": "3a477889c63cded010add59c3707b5693e06724a97053eacc8e2f0363672a4ac",
+    "split_manifest.jsonl": "fefbb3fb6135ed17d5e43832444c51a350913342ce061f9ab92c16950f172783"
+  },
+  "format_warning_count": 2
+}
