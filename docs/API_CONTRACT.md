@@ -58,3 +58,11 @@ Module `ml/src/explain.py` (`Explainer.analyze`) trả đúng hình dạng dư�
 - Lịch sử `GET /api/v1/analyses` hiện chỉ lưu `label`, `score`, `model_version` và `content_preview`, **chưa** có `explanation`. Muốn xem lại giải thích trong lịch sử thì cần lưu object này (chỉ từ khóa, không nguyên văn bài) hoặc tính lại theo yêu cầu; quyết định ở issue tiếp theo.
 
 Tài liệu này là nơi thống nhất hợp đồng trước khi code. Không gửi `user_id` từ client để quyết định quyền sở hữu; API lấy từ phiên đăng nhập. Không coi phản hồi đồng ý/không đồng ý là nhãn thật/giả.
+
+## Tích hợp ML-01 (nhánh API/UI)
+
+Mục này cập nhật đề xuất ML-04 phía trên: `/api/v1/analyze` hỗ trợ ML-01 qua MODEL_REPORT_PATH và MODEL_CALIBRATION_PATH, giữ nguyên id/label/score/model_version, thêm score_kind và explanation. Phiên bản mô hình lưu vào lịch sử lấy từ metadata, không cố định baseline-v0.
+
+`explanation` mặc định là `{method: "tfidf_times_coefficient", terms: [{term, value, direction}], intercept, other_contribution, fake_margin, unit: "raw_linear_margin", disclaimer}`. Dương nghiêng về Fake; tổng terms.value + other_contribution + intercept = fake_margin. Unigram và bigram là đặc trưng riêng có thể chồng từ. Đây là giải thích margin, không phải phân rã xác suất hiệu chỉnh.
+
+ENABLE_LIME=true thêm `explanation.lime` theo schema ML-04 cũ. LIME thiếu thư viện được đánh dấu lime_unavailable. UI hiển thị disclaimer, nhãn từ server và cảnh báo fidelity thấp; không suy nhãn từ score. Baseline cũ trả explanation=null. Lịch sử chưa lưu explanation. Không tuyên bố đã triển khai cloud hoặc đã tái chạy đánh giá dữ liệu thật.
