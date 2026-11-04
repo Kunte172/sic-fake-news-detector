@@ -28,6 +28,8 @@ class AnalyzeResponse(BaseModel):
     label: str
     score: float
     model_version: str
+    score_kind: str = "model_probability"
+    explanation: dict | None = None
 
 class UserRegisterRequest(BaseModel):
     email: EmailStr
@@ -183,7 +185,11 @@ def analyze(
             status_code=503,
             detail="Model not loaded. Train a baseline and set MODEL_PATH.",
         )
-    label, score = predictor().predict(body.text)
+    try:
+        prediction = predictor().analyze(body.text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    label, score = prediction["label"], prediction["score"]
     analysis_id = None
     if current_user is not None:
         record = models.Analysis(
@@ -192,13 +198,13 @@ def analyze(
             content_preview=body.text[:120],
             label=label,
             score=score,
-            model_version="baseline-v0",
+            model_version=prediction["model_version"],
         )
         db.add(record)
         db.commit()
         db.refresh(record)
         analysis_id = record.id
-    return AnalyzeResponse(id=analysis_id, label=label, score=score, model_version="baseline-v0")
+    return AnalyzeResponse(id=analysis_id, **prediction)
 
 @app.get("/api/v1/analyses", response_model=PaginatedAnalyses)
 def get_analyses(
