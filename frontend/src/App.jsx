@@ -1,4 +1,5 @@
 ﻿import { useEffect, useRef, useState } from 'react'
+import AdminDashboard, { ViewTabs } from './AdminDashboard.jsx'
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 const TOKEN_KEY = 'sic_access_token'
@@ -220,6 +221,7 @@ export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || '')
   const [user, setUser] = useState(null)
   const [authError, setAuthError] = useState('')
+  const [view, setView] = useState('analyze')
 
   const [text, setText] = useState('')
   const [result, setResult] = useState(null)
@@ -244,6 +246,7 @@ export default function App() {
     setHistoryTotal(0)
     setHistoryOffset(0)
     setResult(null)
+    setView('analyze')
     if (message) setAuthError(message)
   }
 
@@ -372,6 +375,41 @@ export default function App() {
     setHistory((prev) => prev.map((item) => (item.id === analysisId ? { ...item, feedback: fbData } : item)))
   }
 
+  const isAdmin = user?.role === 'ADMIN'
+
+  if (isAdmin && view === 'admin') {
+    return (
+      <main className="shell">
+        <header className="header">
+          <span className="brand">SIC / FAKE NEWS LENS</span>
+          <span className="tag">Quản trị · Đồ án nhóm · v0</span>
+        </header>
+
+        <AuthPanel
+          user={user}
+          onLoginSuccess={handleLoginSuccess}
+          onLogout={() => clearSession()}
+          authError={authError}
+          setAuthError={setAuthError}
+        />
+
+        <ViewTabs view={view} onChange={setView} />
+
+        <AdminDashboard
+          key={token}
+          token={token}
+          onUnauthorized={clearSession}
+          isSessionCurrent={() => activeTokenRef.current === token}
+        />
+
+        <footer>
+          Chỉ tài khoản ADMIN thấy màn hình này; quyền thật do máy chủ kiểm tra. Số liệu mô tả phản hồi của người dùng,
+          không xác minh sự thật của bài báo.
+        </footer>
+      </main>
+    )
+  }
+
   return (
     <main className="shell">
       <header className="header">
@@ -394,6 +432,8 @@ export default function App() {
         authError={authError}
         setAuthError={setAuthError}
       />
+
+      {isAdmin && <ViewTabs view={view} onChange={setView} />}
 
       <form className="panel" onSubmit={analyze}>
         <label htmlFor="article">Nội dung bài báo</label>

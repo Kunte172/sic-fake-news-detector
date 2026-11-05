@@ -50,3 +50,28 @@ footer{color:#7d969e;font-size:13px;margin:45px 0 65px;line-height:1.5}
   .form-footer{align-items:stretch;flex-direction:column}
   .form-footer button{width:100%}
 }
+
+/* UI-02: màn hình quản trị */
+.view-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+.section-title { margin: 28px 0 8px; font-size: 18px; }
+.small-text { font-size: 13px; line-height: 1.55; margin: 6px 0; }
+.muted { color: #9fb4bd; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-top: 18px; }
+.stat-card { border: 1px solid #28404b; border-radius: 12px; background: #0c171f; padding: 16px; }
+.stat-label { color: #9fb4bd; font-size: 13px; }
+.stat-value { font-size: 32px; font-weight: 800; margin: 6px 0 2px; }
+.stat-sub { color: #7d969e; font-size: 12px; }
+.filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin: 16px 0 6px; }
+select, input[type="search"] {
+  width: 100%;
+  background: #0c171f;
+  color: #e9f1f4;
+  border: 1px solid #3b5961;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font: inherit;
+  font-size: 14px;
+}
+select:focus, input[type="search"]:focus { outline: 2px solid #60d8cf; outline-offset: 2px; }
+.case-comment { margin: 8px 0 0; font-size: 13px; color: #a9bec6; overflow-wrap: anywhere; }
+button.link { background: none; border: 0; padding: 0; color: #60d8cf; text-decoration: underline; cursor: pointer; font: inherit; font-size: 13px; }
