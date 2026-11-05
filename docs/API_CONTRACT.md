@@ -58,3 +58,16 @@ Module `ml/src/explain.py` (`Explainer.analyze`) trả đúng hình dạng dư�
 - Lịch sử `GET /api/v1/analyses` hiện chỉ lưu `label`, `score`, `model_version` và `content_preview`, **chưa** có `explanation`. Muốn xem lại giải thích trong lịch sử thì cần lưu object này (chỉ từ khóa, không nguyên văn bài) hoặc tính lại theo yêu cầu; quyết định ở issue tiếp theo.
 
 Tài liệu này là nơi thống nhất hợp đồng trước khi code. Không gửi `user_id` từ client để quyết định quyền sở hữu; API lấy từ phiên đăng nhập. Không coi phản hồi đồng ý/không đồng ý là nhãn thật/giả.
+
+## API-03 — Phân tích URL bài báo
+
+`POST /api/v1/analyze` nhận **đúng một** trong `{"text":"..."}` hoặc `{"url":"https://news.example/article"}`. URL dài tối đa 2048 ký tự. Chính sách token giống phân tích text: không token vẫn phân tích nhưng không lưu; token sai trả 401 trước khi tải URL. Có token thì lưu `input_type="url"`, preview lấy từ văn bản trích xuất. Không lưu URL/query string vào database, không chuyển tiếp cookie hay thông tin đăng nhập người dùng tới website.
+
+- Chỉ HTTP/HTTPS cổng chuẩn 80/443, không URL chứa username/password, ký tự điều khiển hoặc backslash.
+- Chặn IP nội bộ, loopback, link-local, địa chỉ đặc biệt và DNS trả kết quả pha trộn công khai/nội bộ. Kết nối TCP ghim vào IP đã kiểm tra; TLS vẫn xác thực hostname gốc. Không dùng proxy môi trường.
+- Kiểm tra lại từng redirect; tối đa 3 redirect. DNS và I/O tối đa 3 giây mỗi thao tác, deadline tổng 12 giây; resolver bị giới hạn 4 worker. Socket bị ngắt khi hết deadline.
+- Tải tối đa 2 MiB; chỉ text/html hoặc application/xhtml+xml; không nhận nội dung nén. Không thực thi JavaScript. Trích các đoạn p trong article/main, nếu không có thì dùng các đoạn p ngoài vùng menu/header/footer.
+- Nội dung trích xuất phải có 80–50000 ký tự; không đủ nội dung, trang JS-only/paywall hoặc định dạng không hỗ trợ trả 422 và yêu cầu dán văn bản.
+- 413: vượt kích thước tải; 422: URL/nội dung không hợp lệ; 502: DNS/HTTP/TLS thất bại; 503: resolver bận hoặc thiếu mô hình; 504: quá thời gian.
+
+Phần trích xuất là heuristic, không đảm bảo lấy đúng nội dung mọi website. Giới hạn này không được bỏ qua để vượt cơ chế chặn của website. Endpoint chưa thêm form URL ở frontend (phần UI tách biệt).

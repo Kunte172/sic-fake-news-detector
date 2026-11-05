@@ -6,7 +6,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from sqlalchemy.orm import Session, joinedload
 
 import os
@@ -19,9 +19,17 @@ from .auth import (
     verify_password,
 )
 from .inference import Predictor
+from .url_extraction import fetch_article, UrlError
 
 class AnalyzeRequest(BaseModel):
-    text: str = Field(min_length=80, max_length=50_000)
+    text: str | None = Field(default=None, min_length=80, max_length=50_000)
+    url: str | None = Field(default=None, min_length=1, max_length=2048)
+
+    @model_validator(mode="after")
+    def exactly_one_input(self):
+        if (self.text is None) == (self.url is None):
+            raise ValueError("Provide exactly one of text or url")
+        return self
 
 class AnalyzeResponse(BaseModel):
     id: int | None = None
@@ -183,13 +191,17 @@ def analyze(
             status_code=503,
             detail="Model not loaded. Train a baseline and set MODEL_PATH.",
         )
-    label, score = predictor().predict(body.text)
+    try:
+        article_text = fetch_article(body.url) if body.url is not None else body.text
+    except UrlError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+    label, score = predictor().predict(article_text)
     analysis_id = None
     if current_user is not None:
         record = models.Analysis(
             user_id=current_user.id,
-            input_type="text",
-            content_preview=body.text[:120],
+            input_type="url" if body.url is not None else "text",
+            content_preview=article_text[:120],
             label=label,
             score=score,
             model_version="baseline-v0",
