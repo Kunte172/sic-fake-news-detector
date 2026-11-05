@@ -275,7 +275,9 @@ export default function AdminDashboard({ token, onUnauthorized, isSessionCurrent
         onRetry={summary.reload}
       />
 
-      <h3 className="section-title">Danh sách ca bị phản hồi không đồng ý ({formatNumber(total)})</h3>
+      <h3 className="section-title">
+        Danh sách ca bị phản hồi không đồng ý{disputed.data ? ` (${formatNumber(total)})` : ''}
+      </h3>
       <p className="muted small-text">
         Điểm là điểm lớp “fake” của mô hình, không phải xác suất bài báo sai sự thật. Phản hồi “không đồng ý”
         là ý kiến của người dùng, không phải nhãn thật/giả và không được dùng để huấn luyện lại mô hình.
