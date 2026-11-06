@@ -19,6 +19,8 @@ export default function App() {
   const theme = useTheme()
   const language = useLanguage()
 
+  const isSessionCurrent = () => activeTokenRef.current === token && Boolean(token)
+
   function clearSession(message = '') {
     activeTokenRef.current = ''
     localStorage.removeItem(TOKEN_KEY)
@@ -105,7 +107,17 @@ export default function App() {
     </div>
   </main>
   if (screen === 'admin' && user.role === 'ADMIN') {
-    return <AdminDashboard token={token} theme={theme} language={language} onLogout={clearSession} onOpenAnalyze={() => setScreen('analyze')} />
+    return (
+      <AdminDashboard
+        token={token}
+        onUnauthorized={(message) => clearSession(message)}
+        isSessionCurrent={isSessionCurrent}
+        theme={theme}
+        language={language}
+        onLogout={clearSession}
+        onOpenAnalyze={() => setScreen('analyze')}
+      />
+    )
   }
 
   return <AnalyzePage key={token} user={user} token={token} theme={theme} language={language}
