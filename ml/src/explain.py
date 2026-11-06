@@ -148,7 +148,7 @@ class Explainer:
         return {"fake": pick(order[::-1][:top_k]), "real": pick(order[:top_k])}
 
     def contributions(self, cleaned: str, top_k: int = 12) -> dict:
-        """Return the exact TF-IDF x coefficient decomposition of the Fake margin."""
+        """Exact decomposition of the linear Fake margin, including bigrams."""
         vectorizer, classifier = self.pipeline.steps[0][1], self.pipeline.steps[-1][1]
         vector = vectorizer.transform([cleaned]).tocsr()
         weights = self._fake_weights()
@@ -156,23 +156,12 @@ class Explainer:
         names = vectorizer.get_feature_names_out()
         order = np.argsort(np.abs(values))[::-1][:top_k]
         intercept = float(classifier.intercept_[0]) * (1 if self.fake_index == 1 else -1)
-        terms = [
-            {
-                "term": str(names[vector.indices[i]]),
-                "value": float(values[i]),
-                "direction": "toward_fake" if values[i] > 0 else "toward_real",
-            }
-            for i in order
-        ]
+        terms = [{"term": str(names[vector.indices[i]]), "value": float(values[i]),
+                  "direction": "toward_fake" if values[i] > 0 else "toward_real"} for i in order]
         total = float(values.sum())
-        return {
-            "method": "tfidf_times_coefficient",
-            "terms": terms,
-            "intercept": intercept,
-            "other_contribution": total - sum(term["value"] for term in terms),
-            "fake_margin": intercept + total,
-            "unit": "raw_linear_margin",
-        }
+        return {"method": "tfidf_times_coefficient", "terms": terms,
+                "intercept": intercept, "other_contribution": total - sum(t["value"] for t in terms),
+                "fake_margin": intercept + total, "unit": "raw_linear_margin"}
 
     # ------------------------------------------------------ LIME cục bộ
     def explain(self, text: str, already_clean: bool = False, **kwargs) -> dict:

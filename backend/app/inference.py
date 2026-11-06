@@ -1,3 +1,4 @@
+"""Artifact adapter: legacy baseline or audited ML-01 with explicit metadata."""
 import os
 from pathlib import Path
 import joblib
@@ -17,18 +18,12 @@ class Predictor:
         try:
             report = os.getenv("MODEL_REPORT_PATH")
             if report:
-                self.explainer = Explainer.from_artifacts(
-                    path, report, os.getenv("MODEL_CALIBRATION_PATH")
-                )
+                self.explainer = Explainer.from_artifacts(path, report, os.getenv("MODEL_CALIBRATION_PATH"))
                 if self.explainer.calibrated and self.explainer.calibration is None:
                     raise ValueError("ML-01 SVM requires MODEL_CALIBRATION_PATH")
                 if not hasattr(self.explainer.pipeline.steps[-1][1], "intercept_"):
                     raise ValueError("This adapter requires a linear classifier with intercept")
-                if (
-                    self.explainer.calibrated
-                    and self.explainer.calibration.get("model_sha256")
-                    != sha256(Path(path))
-                ):
+                if self.explainer.calibrated and self.explainer.calibration.get("model_sha256") != sha256(Path(path)):
                     raise ValueError("Calibration does not match model checksum; rerun calibrate_selected")
                 self.pipeline = self.explainer.pipeline
                 self.version = self.explainer.model_version
@@ -45,7 +40,7 @@ class Predictor:
     def ready(self):
         return self.pipeline is not None
 
-    def analyze(self, text, source_domain=None):
+    def analyze(self, text):
         if not self.ready:
             raise RuntimeError("No model artifact loaded")
         if self.explainer:
@@ -57,44 +52,21 @@ class Predictor:
             label = "SUSPICIOUS" if e.pipeline.predict([cleaned])[0] == e.fake_label else "LESS_SUSPICIOUS"
             explanation = e.contributions(cleaned)
             explanation["disclaimer"] = DISCLAIMER
+            # LIME is optional because it evaluates 1000 perturbations per article.
             if os.getenv("ENABLE_LIME", "false").lower() == "true":
                 try:
                     explanation["lime"] = e.explain(cleaned, already_clean=True)
                 except ImportError:
                     explanation["lime_unavailable"] = True
-            return {
-                "label": label,
-                "score": score,
-                "model_version": self.version,
-                "score_kind": "calibrated_fake_score" if e.calibrated else "model_probability",
-                "explanation": explanation,
-                "review_status": "NEEDS_REVIEW",
-                "decision": "NEEDS_REVIEW",
-                "source_domain": source_domain,
-                "source_scope": "external_url" if source_domain else "pasted_text",
-                "review_reason": (
-                    "Mô hình không có bằng chứng kiểm chứng độc lập cho bài này; "
-                    "không được xem score là xác suất sự thật."
-                ),
-            }
+            return dict(label=label, score=score, model_version=self.version,
+                        score_kind="calibrated_fake_score" if e.calibrated else "model_probability",
+                        explanation=explanation)
         cleaned = clean_text(text)
         if not cleaned.strip():
             raise ValueError("Text is empty after cleaning")
-        score = float(
-            self.pipeline.predict_proba([cleaned])[0][list(self.pipeline.classes_).index(1)]
-        )
-        return {
-            "label": "SUSPICIOUS" if score >= 0.5 else "LESS_SUSPICIOUS",
-            "score": score,
-            "model_version": self.version,
-            "score_kind": "model_probability",
-            "explanation": None,
-            "review_status": "NEEDS_REVIEW",
-            "decision": "NEEDS_REVIEW",
-            "source_domain": source_domain,
-            "source_scope": "external_url" if source_domain else "pasted_text",
-            "review_reason": "Kết quả mô hình chỉ là tín hiệu sàng lọc, cần kiểm chứng độc lập.",
-        }
+        score = float(self.pipeline.predict_proba([cleaned])[0][list(self.pipeline.classes_).index(1)])
+        return dict(label="SUSPICIOUS" if score >= .5 else "LESS_SUSPICIOUS", score=score,
+                    model_version=self.version, score_kind="model_probability", explanation=None)
 
     def predict(self, text):
         result = self.analyze(text)

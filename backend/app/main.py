@@ -54,12 +54,6 @@ class AnalyzeResponse(BaseModel):
     model_version: str
     score_kind: str = "model_probability"
     explanation: dict | None = None
-    review_status: str = "NEEDS_REVIEW"
-    decision: str = "NEEDS_REVIEW"
-    source_domain: str | None = None
-    source_scope: str
-    review_reason: str
-    verification: dict
 
 class UserRegisterRequest(BaseModel):
     email: EmailStr
@@ -315,23 +309,18 @@ def analyze(
             ),
         )
     try:
-        article_text = fetch_article(body.url) if body.url is not None else body.text
-    except UrlError as cause:
-        raise HTTPException(status_code=cause.status_code, detail=cause.detail) from cause
-    try:
-        source_domain = urlparse(body.url).hostname.lower() if body.url else None
-        prediction = predictor().analyze(article_text, source_domain=source_domain)
-        prediction["verification"] = verify_claims(article_text)
-    except ValueError as cause:
-        raise HTTPException(status_code=422, detail=str(cause)) from cause
+        prediction = predictor().analyze(body.text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    label, score = prediction["label"], prediction["score"]
     analysis_id = None
     if current_user is not None:
         record = models.Analysis(
             user_id=current_user.id,
-            input_type="url" if body.url is not None else "text",
-            content_preview=article_text[:120],
-            label=prediction["label"],
-            score=prediction["score"],
+            input_type="text",
+            content_preview=body.text[:120],
+            label=label,
+            score=score,
             model_version=prediction["model_version"],
         )
         db.add(record)
