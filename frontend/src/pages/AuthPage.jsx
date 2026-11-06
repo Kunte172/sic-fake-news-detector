@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { api } from '../api'
 import { Brand, Icon, LanguageButton, ThemeButton } from '../components/Theme'
 
@@ -50,27 +50,24 @@ export default function AuthPage({ onLogin, onGuest, sessionMessage, theme, lang
       setError('Vui lòng nhập địa chỉ email hợp lệ.')
       return
     }
-    const enteringRegistrationCode = register && authStep === 'code'
-    if (!enteringRegistrationCode) {
-      if (password.length < 6 || new TextEncoder().encode(password).length > 72) {
-        setError('Mật khẩu cần ít nhất 6 ký tự và tối đa 72 byte.')
-        return
-      }
-      if ((register || mode === 'reset') && (!/^\p{Lu}/u.test(password) || !/[^\p{L}\p{N}\s]/u.test(password))) {
-        setError('Mật khẩu phải bắt đầu bằng chữ hoa và có ít nhất 1 ký tự đặc biệt.')
-        return
-      }
-      if (register && password !== confirmation) {
-        setError('Hai mật khẩu phải trùng nhau.')
-        return
-      }
-    } else if (!/^\d{6}$/.test(code)) {
+    if (password.length < 6 || new TextEncoder().encode(password).length > 72) {
+      setError('Mật khẩu cần ít nhất 6 ký tự và tối đa 72 byte.')
+      return
+    }
+    if ((register || mode === 'reset') && (!/^\p{Lu}/u.test(password) || !/[^\p{L}\p{N}\s]/u.test(password))) {
+      setError('Mật khẩu phải bắt đầu bằng chữ hoa và có ít nhất 1 ký tự đặc biệt.')
+      return
+    }
+    if (register && password !== confirmation) {
+      setError('Hai mật khẩu phải trùng nhau.')
+      return
+    }
+    if (mode === 'reset' && !/^\d{6}$/.test(code)) {
       setError('Vui lòng nhập đủ 6 chữ số trong mã xác minh.')
       return
     }
     setBusy(true)
     const body = { email: email.trim(), password }
-    let registering = register
     try {
       if (mode === 'reset') {
         await api('/auth/password-reset/verify', { body: { email: email.trim(), code, password } })
@@ -81,19 +78,10 @@ export default function AuthPage({ onLogin, onGuest, sessionMessage, theme, lang
         setNotice('Đã đổi mật khẩu. Bạn có thể đăng nhập bằng mật khẩu mới.')
         return
       }
-      if (register && authStep === 'form') {
-        await api('/auth/register/request-code', { body })
-        setAuthStep('code')
-        setNotice('Mã xác minh đã được gửi đến email của bạn.')
-        return
-      }
-      if (register && authStep === 'code') {
-        await api('/auth/register/verify', { body: { ...body, code } })
-        const data = await api('/auth/login', { body })
-        if (typeof data.access_token !== 'string' || !data.access_token) {
-          throw new Error('Máy chủ chưa cấp phiên đăng nhập.')
-        }
-        onLogin(data.access_token)
+      if (register) {
+        await api('/auth/register', { body })
+        switchMode('login')
+        setNotice(en ? 'Account created. You can now sign in.' : 'Tạo tài khoản thành công. Bạn có thể đăng nhập.')
         return
       }
       const data = await api('/auth/login', { body })
@@ -106,13 +94,12 @@ export default function AuthPage({ onLogin, onGuest, sessionMessage, theme, lang
       setNotice('')
       setError(
         cause instanceof TypeError ? 'Không kết nối được máy chủ. Vui lòng thử lại.'
-        : registering && cause.status === 400 && (authStep === 'form' || cause.message.includes('Email')) ? 'Email này đã được đăng ký.'
-        : registering && cause.status === 400 ? cause.message || 'Mã xác minh không hợp lệ.'
-        : cause.status === 404 ? 'API xác minh email chưa được khởi động lại. Vui lòng khởi động lại backend.'
-        : cause.status === 503 ? 'Máy chủ chưa cấu hình SMTP để gửi mã email.'
+        : mode === 'reset' ? cause.message || 'Không thể đặt lại mật khẩu.'
+        : register && cause.status === 400 ? cause.message
+        : cause.status === 503 ? 'Máy chủ tạm thời không khả dụng. Vui lòng thử lại.'
         : cause.status === 401 ? 'Email hoặc mật khẩu chưa đúng.'
         : cause.status === 422 ? 'Mật khẩu phải bắt đầu bằng chữ hoa và có ít nhất 1 ký tự đặc biệt.'
-        : registering ? 'Đăng ký chưa thành công. Vui lòng thử lại.'
+        : register ? 'Đăng ký chưa thành công. Vui lòng thử lại.'
         : 'Đăng nhập chưa thành công. Vui lòng thử lại.'
       )
     } finally {
@@ -120,12 +107,6 @@ export default function AuthPage({ onLogin, onGuest, sessionMessage, theme, lang
     }
 
   }
-
-  useEffect(() => {
-    if (register && authStep === 'code' && code.length === 6 && !busy) {
-      submit({ preventDefault() {} })
-    }
-  }, [code, authStep, register, busy])
 
   function showReset() {
     setMode('reset')
@@ -157,7 +138,7 @@ export default function AuthPage({ onLogin, onGuest, sessionMessage, theme, lang
       <div className="auth-card">
         <div className="mobile-brand"><Brand /></div>
         <p className="eyebrow">{en ? 'ACCOUNT' : 'TÀI KHOẢN'}</p>
-        <h2 id="auth-title">{mode === 'reset' ? (en ? 'Reset password' : 'Quên mật khẩu') : register ? (authStep === 'code' ? (en ? 'Verify email' : 'Xác minh email') : (en ? 'Create account' : 'Tạo tài khoản')) : (en ? 'Sign in' : 'Đăng nhập')}</h2>
+        <h2 id="auth-title">{mode === 'reset' ? (en ? 'Reset password' : 'Quên mật khẩu') : register ? (en ? 'Create account' : 'Tạo tài khoản') : (en ? 'Sign in' : 'Đăng nhập')}</h2>
         <p className="muted">{en ? 'Sign in to analyze articles and save results.' : 'Đăng nhập để phân tích bài báo và lưu kết quả.'}</p>
         {mode !== 'reset' && <div className="segments" role="group" aria-label="Chọn đăng nhập hoặc đăng ký">
           <button type="button" aria-pressed={!register} disabled={busy} onClick={() => switchMode('login')}>{en ? 'Sign in' : 'Đăng nhập'}</button>
@@ -172,7 +153,7 @@ export default function AuthPage({ onLogin, onGuest, sessionMessage, theme, lang
             {authStep === 'code' && <div className="field"><label htmlFor="code">{en ? 'Verification code' : 'Mã xác minh'}</label><input id="code" inputMode="numeric" pattern="\d{6}" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder={en ? 'Enter 6 digits' : 'Nhập 6 chữ số'} /></div>}
             {(mode !== 'reset' && authStep === 'form') || (mode === 'reset' && authStep === 'code') ? <PasswordField key={mode + authStep} id="password" label={mode === 'reset' ? 'Mật khẩu mới' : 'Mật khẩu'} value={password}
               onChange={(e) => setPassword(e.target.value)} register={register} /> : null}
-            {register && authStep === 'form' && <>
+            {register && <>
               <PasswordField id="confirmation" label="Xác nhận mật khẩu" value={confirmation}
                 onChange={(e) => setConfirmation(e.target.value)} register /></>}
             {error && <p className="notice error" role="alert">{error}</p>}
@@ -185,7 +166,7 @@ export default function AuthPage({ onLogin, onGuest, sessionMessage, theme, lang
               finally { setBusy(false) }
             }}>Gửi mã xác minh <Icon name="arrow" size={17} /></button>}
             {(mode !== 'reset' || authStep === 'code') && <button className="primary full" type="submit" disabled={busy}>
-              {busy ? 'Đang xử lý…' : mode === 'reset' ? 'Đặt lại mật khẩu' : register && authStep === 'form' ? 'Tiếp tục' : register ? 'Xác minh và tạo tài khoản' : 'Đăng nhập'} <Icon name="arrow" size={17} />
+              {busy ? 'Đang xử lý…' : mode === 'reset' ? 'Đặt lại mật khẩu' : register ? 'Tạo tài khoản' : 'Đăng nhập'} <Icon name="arrow" size={17} />
             </button>}
             {mode === 'login' && <button type="button" className="quiet full" onClick={showReset}>Quên mật khẩu?</button>}
             {mode === 'reset' && <button type="button" className="quiet full" onClick={() => switchMode('login')}>Quay lại đăng nhập</button>}
