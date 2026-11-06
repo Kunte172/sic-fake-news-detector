@@ -1,16 +1,30 @@
 from functools import lru_cache
 from typing import Annotated
 from datetime import datetime
+from datetime import timedelta, timezone
+import hashlib
+import json
+import logging
+import secrets
+import smtplib
+from email.message import EmailMessage
+from urllib.error import HTTPError
+from urllib.parse import urlparse
+from urllib.request import Request as UrlRequest, urlopen
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from sqlalchemy.orm import Session, joinedload
 
 import os
+from dotenv import load_dotenv
 from sqlalchemy.exc import IntegrityError
+
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
+
 from . import database, models
 from .auth import (
     create_access_token,
@@ -19,9 +33,18 @@ from .auth import (
     verify_password,
 )
 from .inference import Predictor
+from .url_extraction import UrlError, fetch_article
+from .fact_check import verify_claims
 
 class AnalyzeRequest(BaseModel):
-    text: str = Field(min_length=80, max_length=50_000)
+    text: str | None = Field(default=None, min_length=80, max_length=50_000)
+    url: str | None = Field(default=None, min_length=1, max_length=2048)
+
+    @model_validator(mode="after")
+    def exactly_one_input(self):
+        if (self.text is None) == (self.url is None):
+            raise ValueError("Provide exactly one of text or url")
+        return self
 
 class AnalyzeResponse(BaseModel):
     id: int | None = None
@@ -38,9 +61,11 @@ class UserRegisterRequest(BaseModel):
 
     @field_validator("password")
     @classmethod
-    def check_bytes(cls, v: str) -> str:
+    def validate_password(cls, v: str) -> str:
         if len(v.encode("utf-8")) > 72:
             raise ValueError("Mật khẩu vượt quá 72 byte")
+        if not v[0].isupper() or not any(not char.isalnum() and not char.isspace() for char in v):
+            raise ValueError("Mật khẩu phải bắt đầu bằng chữ hoa và có ít nhất một ký tự đặc biệt")
         return v
 
 class UserLoginRequest(BaseModel):
@@ -55,6 +80,38 @@ class TokenResponse(BaseModel):
 class UserResponse(BaseModel):
     email: str
     role: str
+
+class EmailCodeRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=6, max_length=72)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Mật khẩu vượt quá 72 byte")
+        if not v[0].isupper() or not any(not char.isalnum() and not char.isspace() for char in v):
+            raise ValueError("Mật khẩu phải bắt đầu bằng chữ hoa và có ít nhất một ký tự đặc biệt")
+        return v
+
+class VerifyEmailCodeRequest(EmailCodeRequest):
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+class VerifyResetCodeRequest(PasswordResetRequest):
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+    password: str = Field(min_length=6, max_length=72)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Mật khẩu vượt quá 72 byte")
+        if not v[0].isupper() or not any(not char.isalnum() and not char.isspace() for char in v):
+            raise ValueError("Mật khẩu phải bắt đầu bằng chữ hoa và có ít nhất một ký tự đặc biệt")
+        return v
 
 class FeedbackRequest(BaseModel):
     agree: bool
@@ -103,6 +160,68 @@ def predictor() -> Predictor:
     return Predictor()
 
 app = FastAPI(title="SIC Fake News Lens", version="0.1.0")
+
+def _send_code(email: str, code: str, purpose: str) -> None:
+    body = (
+        f"Mã xác minh của bạn là: {code}\n\n"
+        f"Mã có hiệu lực trong 10 phút cho thao tác {purpose}."
+    )
+    subject = "Mã xác minh SIC / Fake News Lens"
+    brevo_key = os.getenv("BREVO_API_KEY", "").strip()
+    if brevo_key:
+        sender = os.getenv("BREVO_SENDER_EMAIL", "").strip()
+        if not sender:
+            raise HTTPException(status_code=503, detail="Email chưa được cấu hình trên máy chủ")
+        request = UrlRequest(
+            "https://api.brevo.com/v3/smtp/email",
+            data=json.dumps({
+                "sender": {"email": sender},
+                "to": [{"email": email}],
+                "subject": subject,
+                "textContent": body,
+            }).encode("utf-8"),
+            headers={"api-key": brevo_key, "Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=10):
+                return
+        except HTTPError as cause:
+            logging.getLogger(__name__).warning("Brevo email request failed with HTTP %s", cause.code)
+            raise HTTPException(status_code=503, detail="Không thể gửi email xác minh") from cause
+        except OSError as cause:
+            logging.getLogger(__name__).warning("Brevo email connection failed")
+            raise HTTPException(status_code=503, detail="Không thể gửi email xác minh") from cause
+
+    host = os.getenv("SMTP_HOST")
+    if not host:
+        raise HTTPException(status_code=503, detail="Email chưa được cấu hình trên máy chủ")
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = os.getenv("SMTP_FROM", os.getenv("SMTP_USER", ""))
+    message["To"] = email
+    message.set_content(body)
+    try:
+        with smtplib.SMTP(host, int(os.getenv("SMTP_PORT", "587")), timeout=10) as server:
+            server.starttls()
+            server.login(
+                os.getenv("SMTP_USER", ""),
+                os.getenv("SMTP_PASSWORD", "").replace(" ", ""),
+            )
+            server.send_message(message)
+    except (OSError, smtplib.SMTPException) as cause:
+        raise HTTPException(status_code=503, detail="Không thể gửi email xác minh") from cause
+
+def _code_hash(code: str) -> str:
+    return hashlib.sha256(code.encode("ascii")).hexdigest()
+
+def _new_code() -> str:
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+def _is_expired(expires_at: datetime) -> bool:
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    return expires_at < datetime.now(timezone.utc)
 
 app.add_middleware(
     CORSMiddleware,
@@ -183,7 +302,10 @@ def analyze(
     if not predictor().ready:
         raise HTTPException(
             status_code=503,
-            detail="Model not loaded. Train a baseline and set MODEL_PATH.",
+            detail=(
+                "Model not loaded. "
+                + (predictor().error or "Set MODEL_PATH to a trained artifact.")
+            ),
         )
     try:
         prediction = predictor().analyze(body.text)
@@ -323,6 +445,80 @@ def register(body: UserRegisterRequest, db: Annotated[Session, Depends(database.
         )
     
     return UserResponse(email=new_user.email, role=new_user.role.value)
+
+@app.post("/api/v1/auth/register/request-code", status_code=202)
+def request_registration_code(body: EmailCodeRequest, db: Annotated[Session, Depends(database.get_db)]) -> dict[str, str]:
+    email = body.email.lower()
+    if db.query(models.User).filter(models.User.email == email).first():
+        raise HTTPException(status_code=400, detail="Email đã được đăng ký")
+    code = _new_code()
+    db.query(models.EmailCode).filter(
+        models.EmailCode.email == email, models.EmailCode.purpose == "register"
+    ).delete()
+    db.add(models.EmailCode(
+        email=email, purpose="register", code_hash=_code_hash(code),
+        password_hash=get_password_hash(body.password),
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
+    ))
+    db.commit()
+    _send_code(email, code, "đăng ký tài khoản")
+    return {"message": "Mã xác minh đã được gửi đến email"}
+
+@app.post("/api/v1/auth/register/verify", response_model=UserResponse, status_code=201)
+def verify_registration_code(body: VerifyEmailCodeRequest, db: Annotated[Session, Depends(database.get_db)]) -> UserResponse:
+    email = body.email.lower()
+    record = (db.query(models.EmailCode)
+              .filter(models.EmailCode.email == email, models.EmailCode.purpose == "register")
+              .order_by(models.EmailCode.created_at.desc()).first())
+    if not record or _is_expired(record.expires_at) or record.attempts >= 5:
+        raise HTTPException(status_code=400, detail="Mã xác minh không hợp lệ hoặc đã hết hạn")
+    if record.code_hash != _code_hash(body.code):
+        record.attempts += 1
+        db.commit()
+        raise HTTPException(status_code=400, detail="Mã xác minh không đúng")
+    user = models.User(email=email, hashed_password=record.password_hash, role=models.Role.USER)
+    db.add(user)
+    db.delete(record)
+    try:
+        db.commit()
+    except IntegrityError as cause:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Email đã được đăng ký") from cause
+    return UserResponse(email=user.email, role=user.role.value)
+
+@app.post("/api/v1/auth/password-reset/request-code", status_code=202)
+def request_password_reset_code(body: PasswordResetRequest, db: Annotated[Session, Depends(database.get_db)]) -> dict[str, str]:
+    email = body.email.lower()
+    if not db.query(models.User).filter(models.User.email == email).first():
+        raise HTTPException(status_code=404, detail="Email chưa được đăng ký")
+    code = _new_code()
+    db.query(models.EmailCode).filter(
+        models.EmailCode.email == email, models.EmailCode.purpose == "reset"
+    ).delete()
+    db.add(models.EmailCode(
+        email=email, purpose="reset", code_hash=_code_hash(code),
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
+    ))
+    db.commit()
+    _send_code(email, code, "đặt lại mật khẩu")
+    return {"message": "Mã xác minh đã được gửi đến email"}
+
+@app.post("/api/v1/auth/password-reset/verify", status_code=204)
+def verify_password_reset_code(body: VerifyResetCodeRequest, db: Annotated[Session, Depends(database.get_db)]) -> None:
+    email = body.email.lower()
+    record = (db.query(models.EmailCode)
+              .filter(models.EmailCode.email == email, models.EmailCode.purpose == "reset")
+              .order_by(models.EmailCode.created_at.desc()).first())
+    if not record or _is_expired(record.expires_at) or record.attempts >= 5:
+        raise HTTPException(status_code=400, detail="Mã xác minh không hợp lệ hoặc đã hết hạn")
+    if record.code_hash != _code_hash(body.code):
+        record.attempts += 1
+        db.commit()
+        raise HTTPException(status_code=400, detail="Mã xác minh không đúng")
+    user = db.query(models.User).filter(models.User.email == email).first()
+    user.hashed_password = get_password_hash(body.password)
+    db.delete(record)
+    db.commit()
 
 @app.post("/api/v1/auth/login", response_model=TokenResponse)
 def login(body: UserLoginRequest, db: Annotated[Session, Depends(database.get_db)]) -> TokenResponse:

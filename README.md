@@ -24,6 +24,17 @@ Yêu cầu: Python 3.11+ và Node.js 20+. Mở terminal ở thư mục gốc rep
    uvicorn backend.app.main:app --reload --port 8000
    ```
 
+   Để bật xác minh email và quên mật khẩu bằng mã OTP, tạo file `backend/.env` từ
+   `backend/.env.example`, điền thông tin SMTP rồi chạy API:
+
+   ```powershell
+   Copy-Item backend\.env.example backend\.env
+   notepad backend\.env
+   ```
+
+   Không dùng mật khẩu Gmail thông thường và không commit các giá trị này vào mã nguồn.
+   Backend tự đọc `backend/.env` khi khởi động. Chạy `alembic upgrade head` sau khi cập nhật để tạo bảng mã xác minh.
+
 3. Trong terminal khác:
 
    ```bash
@@ -33,6 +44,34 @@ Yêu cầu: Python 3.11+ và Node.js 20+. Mở terminal ở thư mục gốc rep
    ```
 
 Mở `http://localhost:5173`. Tài liệu API ở `http://localhost:8000/docs`. Nếu chưa có `MODEL_PATH`, `/api/v1/analyze` trả `503` thay vì hiển thị kết quả giả.
+Để bật đối chiếu fact-check, tạo API key cho Google Fact Check Tools API rồi đặt
+`GOOGLE_FACT_CHECK_API_KEY=<your-key>` trong `backend/.env`. Không có key, hệ thống
+vẫn phân tích mô hình nhưng bắt buộc trả kết luận `Chưa đủ dữ kiện`; không được hiểu là
+bài đúng hay bài sai.
+
+### Dùng mô hình ML-01 để phân tích bài báo hoặc URL
+
+PR ML-01/ML-04 đã được nối vào API. Để bật mô hình SVM đã audit, cần có bộ chia
+DATA-02 và tạo đủ ba artifact cùng một lần chạy:
+
+```powershell
+python -m ml.src.train_classic_models
+python -m ml.src.calibrate_selected
+$env:MODEL_PATH="ml/artifacts/ml01/ml01_selected.joblib"
+$env:MODEL_REPORT_PATH="ml/artifacts/ml01/ml01_report.json"
+$env:MODEL_CALIBRATION_PATH="ml/artifacts/ml01/ml01_calibration.json"
+uvicorn backend.app.main:app --reload --port 8000
+```
+
+`MODEL_PATH` một mình chỉ dùng được với baseline có `predict_proba`; ML-01 Linear SVM
+bắt buộc có report và calibration khớp checksum. Giao diện gửi nội dung dán vào
+`POST /api/v1/analyze` bằng `text`, hoặc gửi URL bằng `url`; backend sẽ tải và trích
+xuất bài báo an toàn trước khi đưa vào cùng mô hình. Kết quả mới hiển thị nhãn,
+điểm lớp Fake đã hiệu chỉnh và các từ/cụm từ đóng góp. UI luôn đánh dấu
+`NEEDS_REVIEW`: score là tín hiệu sàng lọc, không phải xác suất sự thật. Để cải thiện
+độ bao phủ ngoài miền Kaggle, cần bổ sung một tập bài báo từ nhiều nguồn (khoa học,
+chính thống, quốc tế) có nhãn do nhóm kiểm duyệt; không được trộn dữ liệu chưa gán
+nhãn vào tập huấn luyện.
 
 API yêu cầu `SECRET_KEY` khi khởi động. Dùng cùng một khóa bí mật cho các phiên bản chạy chung tài khoản; đổi khóa sẽ làm token cũ hết hiệu lực. Nếu dùng database khác mặc định, đặt `DATABASE_URL` trước lệnh Alembic và trước khi chạy API. File SQLite local không được commit. Để tạo ADMIN trên database mới, đặt `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong môi trường trước khi khởi động lần đầu; không dùng mật khẩu mẫu ở môi trường triển khai.
 

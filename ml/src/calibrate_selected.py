@@ -11,7 +11,6 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import pandas as pd
 from sklearn.metrics import brier_score_loss
 
 from ml.src.train_classic_models import load_splits, sha256
@@ -51,7 +50,7 @@ def main():
     })
     out = args.model_dir / "ml01_calibration.json"
     out.write_text(json.dumps(cal, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(cal, ensure_ascii=False, indent=2))
+    print(json.dumps(cal, ensure_ascii=True, indent=2))
 
 
 if __name__ == "__main__":

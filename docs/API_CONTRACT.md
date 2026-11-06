@@ -14,6 +14,8 @@ Base URL local: `http://localhost:8000`. JSON UTF-8.
 - `POST /api/v1/analyses/{id}/feedback` cần Bearer token, body `{"agree":false,"comment":"..."}` → HTTP 201 với `id`, `analysis_id`, `agree`, `comment`. Chỉ chủ sở hữu được phản hồi; không có bài hoặc không thuộc sở hữu trả 404, gửi lần hai trả 409. `comment` tối đa 1000 ký tự. Phản hồi không trở thành nhãn huấn luyện.
 - `GET /api/v1/admin/summary` cần quyền ADMIN → `total_users`, `total_analyses`, `total_feedbacks`, `disputed_feedbacks`.
 - `GET /api/v1/admin/disputed?limit=10&offset=0` cần quyền ADMIN → `total`, `limit`, `offset`, `items` cho phản hồi `agree:false`, gồm thông tin tóm tắt bài và phiên bản mô hình. USER nhận 403.
+- `POST /api/v1/analyze` nhận đúng một trong `text` hoặc `url`. Với `url`, máy chủ chỉ tải HTTP(S) public trên cổng chuẩn, tối đa 3 lần chuyển hướng, 2 MiB và 12 giây; URL trỏ tới địa chỉ nội bộ, có thông tin đăng nhập, hoặc không trả HTML sẽ bị từ chối. Nội dung HTML được trích xuất thành văn bản trước khi phân tích và lịch sử lưu `input_type: "url"`.
+- Phản hồi `/api/v1/analyze` có thêm `verification`: hệ thống trích xuất tối đa 3 khẳng định, tra Google Fact Check Tools API khi có `GOOGLE_FACT_CHECK_API_KEY`, trả nguồn fact-check và một trong `EVIDENCE_TRUE`, `EVIDENCE_FALSE`, `INSUFFICIENT_EVIDENCE`. Không có key, không có kết quả, hoặc lỗi dịch vụ đều là `INSUFFICIENT_EVIDENCE`.
 
 ## Đề xuất cho các issue tiếp theo (chưa triển khai)
 
@@ -48,6 +50,11 @@ Module `ml/src/explain.py` (`Explainer.analyze`) trả đúng hình dạng dư�
 ```
 
 - `label`: `SUSPICIOUS` khi mô hình dự đoán lớp Fake, ngược lại `LESS_SUSPICIOUS` (khớp `backend/app/inference.py`). Nhãn lấy từ `predict` của mô hình, khớp số liệu ML-01.
+- `review_status`: hiện là `NEEDS_REVIEW`; đây là cờ an toàn vì bộ đánh giá ML-01 không đại diện cho mọi nguồn báo chí.
+- `review_reason`: giải thích vì sao phải đối chiếu độc lập. Không diễn giải `score` thành xác suất bài báo giả.
+- `decision`: quyết định an toàn của hệ thống; hiện luôn là `NEEDS_REVIEW` vì API chưa có bộ kiểm chứng sự kiện độc lập.
+- `source_domain`: tên miền của URL khi đầu vào là `url`, hoặc `null` khi dán văn bản.
+- `source_scope`: `external_url` hoặc `pasted_text`; đây là metadata đầu vào, không phải đánh giá uy tín nguồn.
 - `score`: điểm lớp Fake. Với Linear SVM là điểm **đã hiệu chỉnh** (Platt scaling fit trên validation, `score_kind = calibrated_fake_score`); không phải `decision_function` thô và không phải xác suất sự kiện sai sự thật. Điểm hiệu chỉnh và nhãn có thể lệch ở vùng gần 0,5 (ví dụ điểm 0,55 vẫn đi với `LESS_SUSPICIOUS`; 8/3.803 bài test): **nhãn là kết quả chính thức**, UI/API không tự suy nhãn từ điểm.
 - `terms[].weight` > 0: từ đẩy dự đoán về Fake; < 0: về Real (ảnh hưởng **cục bộ** của LIME quanh bài này). `global_weight`: hệ số của từ trong mô hình (dương = nghiêng Fake), `null` nếu từ ngoài từ vựng.
 - `fidelity`: R² của xấp xỉ cục bộ. Giá trị thấp nghĩa là giải thích kém tin cậy (thường gặp khi điểm gần 0 hoặc 1); UI phải cảnh báo, không trình bày danh sách từ như lý do chắc chắn.
