@@ -18,7 +18,7 @@ from typing import Annotated
 from fastapi import Depends
 from jose import jwt
 
-from backend.app.main import app, predictor, require_admin
+from backend.app.main import app, predictor, require_admin, init_admin_user
 from backend.app.database import Base, get_db
 from backend.app import models
 from backend.app.auth import create_access_token, get_password_hash
@@ -186,6 +186,22 @@ class ApiTests(unittest.TestCase):
         
         test_admin_res = self.client.get("/api/v1/admin/test-only", headers=headers)
         self.assertEqual(test_admin_res.status_code, 200)
+
+    def test_existing_user_becomes_admin_only_with_matching_configured_password(self):
+        email = "existing@example.com"
+        password = "Existing123!"
+        with TestingSessionLocal() as db:
+            db.add(models.User(email=email, hashed_password=get_password_hash(password), role=models.Role.USER))
+            db.commit()
+        with patch("backend.app.main.database.get_db", side_effect=override_get_db):
+            with patch.dict(os.environ, {"ADMIN_EMAIL": email, "ADMIN_PASSWORD": "Wrong123!"}):
+                init_admin_user()
+            with TestingSessionLocal() as db:
+                self.assertEqual(db.query(models.User).filter_by(email=email).one().role, models.Role.USER)
+            with patch.dict(os.environ, {"ADMIN_EMAIL": email, "ADMIN_PASSWORD": password}):
+                init_admin_user()
+        with TestingSessionLocal() as db:
+            self.assertEqual(db.query(models.User).filter_by(email=email).one().role, models.Role.ADMIN)
 
 if __name__ == "__main__":
     unittest.main()

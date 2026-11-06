@@ -556,5 +556,10 @@ def init_admin_user():
             new_admin = models.User(email=admin_email_lower, hashed_password=hashed_pw, role=models.Role.ADMIN)
             db.add(new_admin)
             db.commit()
+        elif admin_user.role != models.Role.ADMIN and verify_password(admin_password, admin_user.hashed_password):
+            # An existing account may predate ADMIN_EMAIL. Require proof that the
+            # configured password belongs to that account before granting access.
+            admin_user.role = models.Role.ADMIN
+            db.commit()
     finally:
         db.close()
