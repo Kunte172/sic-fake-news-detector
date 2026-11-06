@@ -11,9 +11,9 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import pandas as pd
 from sklearn.metrics import brier_score_loss
 
+from ml.src.train_classic_models import load_splits, sha256
 from ml.src.explain import fake_label_from_report, fit_platt
 
 
@@ -30,8 +30,10 @@ def main():
         return
     fake = fake_label_from_report(report)
 
-    frame = pd.read_csv(args.splits, keep_default_na=False)
-    val, test = (frame[frame.split.eq(s)] for s in ("validation", "test"))
+    if sha256(args.splits) != report["input_sha256"]:
+        raise ValueError("Split checksum differs from ML-01 training report")
+    parts = load_splits(args.splits)
+    val, test = parts["validation"], parts["test"]
     cal = fit_platt(pipeline.decision_function(val.text_clean), val.label.eq(fake))
 
     margin = pipeline.decision_function(test.text_clean)
@@ -39,6 +41,8 @@ def main():
     p_fake = 1 / (1 + np.exp(-z))
     svm_fake = pipeline.predict(test.text_clean) == fake
     cal.update({
+        "model_sha256": sha256(args.model_dir / "ml01_selected.joblib"),
+        "input_sha256": sha256(args.splits),
         "n_validation": len(val),
         "test_brier": round(float(brier_score_loss(test.label.eq(fake), p_fake)), 6),
         "test_rows_where_threshold_0.5_disagrees_with_svm": int(((p_fake >= 0.5) != svm_fake).sum()),
@@ -46,7 +50,7 @@ def main():
     })
     out = args.model_dir / "ml01_calibration.json"
     out.write_text(json.dumps(cal, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(cal, ensure_ascii=False, indent=2))
+    print(json.dumps(cal, ensure_ascii=True, indent=2))
 
 
 if __name__ == "__main__":
