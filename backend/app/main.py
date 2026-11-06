@@ -3,10 +3,14 @@ from typing import Annotated
 from datetime import datetime
 from datetime import timedelta, timezone
 import hashlib
+import json
+import logging
 import secrets
 import smtplib
 from email.message import EmailMessage
+from urllib.error import HTTPError
 from urllib.parse import urlparse
+from urllib.request import Request as UrlRequest, urlopen
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -164,17 +168,45 @@ def predictor() -> Predictor:
 app = FastAPI(title="SIC Fake News Lens", version="0.1.0")
 
 def _send_code(email: str, code: str, purpose: str) -> None:
+    body = (
+        f"Mã xác minh của bạn là: {code}\n\n"
+        f"Mã có hiệu lực trong 10 phút cho thao tác {purpose}."
+    )
+    subject = "Mã xác minh SIC / Fake News Lens"
+    brevo_key = os.getenv("BREVO_API_KEY", "").strip()
+    if brevo_key:
+        sender = os.getenv("BREVO_SENDER_EMAIL", "").strip()
+        if not sender:
+            raise HTTPException(status_code=503, detail="Email chưa được cấu hình trên máy chủ")
+        request = UrlRequest(
+            "https://api.brevo.com/v3/smtp/email",
+            data=json.dumps({
+                "sender": {"email": sender},
+                "to": [{"email": email}],
+                "subject": subject,
+                "textContent": body,
+            }).encode("utf-8"),
+            headers={"api-key": brevo_key, "Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=10):
+                return
+        except HTTPError as cause:
+            logging.getLogger(__name__).warning("Brevo email request failed with HTTP %s", cause.code)
+            raise HTTPException(status_code=503, detail="Không thể gửi email xác minh") from cause
+        except OSError as cause:
+            logging.getLogger(__name__).warning("Brevo email connection failed")
+            raise HTTPException(status_code=503, detail="Không thể gửi email xác minh") from cause
+
     host = os.getenv("SMTP_HOST")
     if not host:
         raise HTTPException(status_code=503, detail="Email chưa được cấu hình trên máy chủ")
     message = EmailMessage()
-    message["Subject"] = "Mã xác minh SIC / Fake News Lens"
+    message["Subject"] = subject
     message["From"] = os.getenv("SMTP_FROM", os.getenv("SMTP_USER", ""))
     message["To"] = email
-    message.set_content(
-        f"Mã xác minh của bạn là: {code}\n\n"
-        f"Mã có hiệu lực trong 10 phút cho thao tác {purpose}."
-    )
+    message.set_content(body)
     try:
         with smtplib.SMTP(host, int(os.getenv("SMTP_PORT", "587")), timeout=10) as server:
             server.starttls()
