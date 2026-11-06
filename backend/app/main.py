@@ -1,3 +1,4 @@
+from .fact_check import verify_claims
 from functools import lru_cache
 from typing import Annotated
 from datetime import datetime

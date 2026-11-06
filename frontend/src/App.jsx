@@ -1,9 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { api } from './api'
-import { Brand, useLanguage, useTheme } from './components/Theme'
-import AuthPage from './pages/AuthPage'
-import AnalyzePage from './pages/AnalyzePage'
-import AdminDashboard from './AdminDashboard'
+﻿import { useEffect, useRef, useState } from 'react'
+import AdminDashboard, { ViewTabs } from './AdminDashboard.jsx'
 
 const TOKEN_KEY = 'sic_access_token'
 const GUEST_KEY = 'sic_guest_mode'
@@ -11,11 +7,20 @@ const GUEST_KEY = 'sic_guest_mode'
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem(GUEST_KEY) === '1' ? '' : localStorage.getItem(TOKEN_KEY) || '')
   const [user, setUser] = useState(null)
-  const [guest, setGuest] = useState(() => localStorage.getItem(GUEST_KEY) === '1')
-  const [screen, setScreen] = useState('analyze')
-  const [sessionMessage, setSessionMessage] = useState('')
-  const [profileError, setProfileError] = useState('')
-  const [attempt, setAttempt] = useState(0)
+  const [authError, setAuthError] = useState('')
+  const [view, setView] = useState('analyze')
+
+  const [text, setText] = useState('')
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const [history, setHistory] = useState([])
+  const [historyTotal, setHistoryTotal] = useState(0)
+  const [historyOffset, setHistoryOffset] = useState(0)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState('')
+
   const activeTokenRef = useRef(token)
   const theme = useTheme()
   const language = useLanguage()
@@ -26,10 +31,12 @@ export default function App() {
     localStorage.removeItem(GUEST_KEY)
     setSessionMessage(message)
     setUser(null)
-    setToken('')
-    setGuest(false)
-    setScreen('analyze')
-    setProfileError('')
+    setHistory([])
+    setHistoryTotal(0)
+    setHistoryOffset(0)
+    setResult(null)
+    setView('analyze')
+    if (message) setAuthError(message)
   }
 
   function startSession(nextToken) {
