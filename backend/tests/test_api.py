@@ -61,7 +61,7 @@ class ApiTests(unittest.TestCase):
         predictor.cache_clear()
         self.environment.stop()
 
-    def _register_and_login(self, email="tester@example.com", password="Password123"):
+    def _register_and_login(self, email="tester@example.com", password="Password123!"):
         self.client.post("/api/v1/auth/register", json={"email": email, "password": password})
         res = self.client.post("/api/v1/auth/login", json={"email": email, "password": password})
         return {"Authorization": f"Bearer {res.json()['access_token']}"}
@@ -73,8 +73,8 @@ class ApiTests(unittest.TestCase):
         res = self.client.post("/api/v1/analyze", json={"text": "A long test text " * 20})
         self.assertEqual(res.status_code, 503)
 
-    def test_short_input_is_rejected(self):
-        self.assertEqual(self.client.post("/api/v1/analyze", json={"text": "short"}).status_code, 422)
+    def test_empty_input_is_rejected(self):
+        self.assertEqual(self.client.post("/api/v1/analyze", json={"text": ""}).status_code, 422)
 
     def test_register_mass_assignment_blocked(self):
         res = self.client.post(
@@ -85,7 +85,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(res.json()["role"], "USER")
 
     def test_duplicate_email_rejected(self):
-        payload = {"email": "dup@example.com", "password": "Password123"}
+        payload = {"email": "dup@example.com", "password": "Password123!"}
         self.assertEqual(self.client.post("/api/v1/auth/register", json=payload).status_code, 201)
         self.assertEqual(self.client.post("/api/v1/auth/register", json=payload).status_code, 400)
 
@@ -153,12 +153,12 @@ class ApiTests(unittest.TestCase):
             try:
                 response = self.client.post(
                     "/api/v1/auth/register",
-                    json={"email": "new@example.com", "password": "Password123"},
+                    json={"email": "new@example.com", "password": "Password123!"},
                 )
                 self.assertEqual(response.status_code, 201, response.text)
                 response = self.client.post(
                     "/api/v1/auth/login",
-                    json={"email": "new@example.com", "password": "Password123"},
+                    json={"email": "new@example.com", "password": "Password123!"},
                 )
                 self.assertEqual(response.status_code, 200, response.text)
                 token = response.json()["access_token"]

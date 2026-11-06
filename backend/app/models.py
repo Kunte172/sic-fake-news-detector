@@ -21,6 +21,19 @@ class User(Base):
     analyses = relationship("Analysis", back_populates="user")
 
 
+class EmailCode(Base):
+    __tablename__ = "email_codes"
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String, index=True, nullable=False)
+    purpose = Column(String(16), nullable=False)
+    code_hash = Column(String(64), nullable=False)
+    password_hash = Column(String, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    attempts = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
 class Analysis(Base):
     __tablename__ = "analyses"
 
