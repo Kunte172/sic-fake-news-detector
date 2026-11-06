@@ -1,9 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { api } from './api'
-import { Brand, useLanguage, useTheme } from './components/Theme'
-import AuthPage from './pages/AuthPage'
-import AnalyzePage from './pages/AnalyzePage'
-import AdminDashboard from './AdminDashboard'
+﻿import { useEffect, useRef, useState } from 'react'
+import AdminDashboard, { ViewTabs } from './AdminDashboard.jsx'
 
 const TOKEN_KEY = 'sic_access_token'
 const GUEST_KEY = 'sic_guest_mode'
@@ -11,11 +7,20 @@ const GUEST_KEY = 'sic_guest_mode'
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem(GUEST_KEY) === '1' ? '' : localStorage.getItem(TOKEN_KEY) || '')
   const [user, setUser] = useState(null)
-  const [guest, setGuest] = useState(() => localStorage.getItem(GUEST_KEY) === '1')
-  const [screen, setScreen] = useState('analyze')
-  const [sessionMessage, setSessionMessage] = useState('')
-  const [profileError, setProfileError] = useState('')
-  const [attempt, setAttempt] = useState(0)
+  const [authError, setAuthError] = useState('')
+  const [view, setView] = useState('analyze')
+
+  const [text, setText] = useState('')
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const [history, setHistory] = useState([])
+  const [historyTotal, setHistoryTotal] = useState(0)
+  const [historyOffset, setHistoryOffset] = useState(0)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState('')
+
   const activeTokenRef = useRef(token)
   const theme = useTheme()
   const language = useLanguage()
@@ -26,10 +31,12 @@ export default function App() {
     localStorage.removeItem(GUEST_KEY)
     setSessionMessage(message)
     setUser(null)
-    setToken('')
-    setGuest(false)
-    setScreen('analyze')
-    setProfileError('')
+    setHistory([])
+    setHistoryTotal(0)
+    setHistoryOffset(0)
+    setResult(null)
+    setView('analyze')
+    if (message) setAuthError(message)
   }
 
   function startSession(nextToken) {
@@ -109,5 +116,204 @@ export default function App() {
   if (screen === 'admin' && user.role === 'ADMIN') {
     return <AdminDashboard token={token} theme={theme} language={language} onLogout={clearSession} onOpenAnalyze={() => setScreen('analyze')} />
   }
-  return <AnalyzePage key={token || 'guest'} user={user} token={token} theme={theme} language={language} onLogout={clearSession} onOpenAdmin={() => setScreen('admin')} />
+
+  function handleFeedbackSaved(analysisId, fbData) {
+    setResult((prev) => (prev && prev.id === analysisId ? { ...prev, feedback: fbData } : prev))
+    setHistory((prev) => prev.map((item) => (item.id === analysisId ? { ...item, feedback: fbData } : item)))
+  }
+
+  const isAdmin = user?.role === 'ADMIN'
+
+  if (isAdmin && view === 'admin') {
+    return (
+      <main className="shell">
+        <header className="header">
+          <span className="brand">SIC / FAKE NEWS LENS</span>
+          <span className="tag">Quản trị · Đồ án nhóm · v0</span>
+        </header>
+
+        <AuthPanel
+          user={user}
+          onLoginSuccess={handleLoginSuccess}
+          onLogout={() => clearSession()}
+          authError={authError}
+          setAuthError={setAuthError}
+        />
+
+        <ViewTabs view={view} onChange={setView} />
+
+        <AdminDashboard
+          key={token}
+          token={token}
+          onUnauthorized={clearSession}
+          isSessionCurrent={() => activeTokenRef.current === token}
+        />
+
+        <footer>
+          Chỉ tài khoản ADMIN thấy màn hình này; quyền thật do máy chủ kiểm tra. Số liệu mô tả phản hồi của người dùng,
+          không xác minh sự thật của bài báo.
+        </footer>
+      </main>
+    )
+  }
+
+  return (
+    <main className="shell">
+      <header className="header">
+        <span className="brand">SIC / FAKE NEWS LENS</span>
+        <span className="tag">Đồ án nhóm · v0</span>
+      </header>
+
+      <section className="hero">
+        <p className="eyebrow">XỬ LÝ NGÔN NGỮ TỰ NHIÊN</p>
+        <h1>Sàng lọc dấu hiệu đáng ngờ trong bài báo.</h1>
+        <p className="lead">
+          Dán nội dung bài báo tiếng Anh để xem điểm dự đoán của mô hình. Kết quả chỉ hỗ trợ lựa chọn thông tin cần kiểm tra thêm.
+        </p>
+      </section>
+
+      <AuthPanel
+        user={user}
+        onLoginSuccess={handleLoginSuccess}
+        onLogout={() => clearSession()}
+        authError={authError}
+        setAuthError={setAuthError}
+      />
+
+      {isAdmin && <ViewTabs view={view} onChange={setView} />}
+
+      <form className="panel" onSubmit={analyze}>
+        <label htmlFor="article">Nội dung bài báo</label>
+        <textarea
+          id="article"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          minLength={80}
+          maxLength={50000}
+          required
+          placeholder="Paste an English news article here..."
+        />
+        <div className="form-footer">
+          <span>
+            {text.length.toLocaleString('vi-VN')} / 50.000 ký tự
+            {!user && ' · (Chưa đăng nhập: kết quả không lưu vào lịch sử)'}
+          </span>
+          <button disabled={loading || text.length < 80}>
+            {loading ? 'Đang phân tích...' : 'Phân tích văn bản'}
+          </button>
+        </div>
+      </form>
+
+      {error && <div className="notice error" role="alert">{error}</div>}
+
+      {result && (
+        <section className="panel result" aria-live="polite">
+          <p className="eyebrow">KẾT QUẢ MÔ HÌNH · {result.model_version}</p>
+          <h2>{result.label === 'SUSPICIOUS' ? 'Cần kiểm tra thêm' : 'Ít dấu hiệu đáng ngờ hơn'}</h2>
+          <p className="score">
+            {Math.round(result.score * 100)}% <small>điểm lớp “fake” trên bộ dữ liệu huấn luyện</small>
+          </p>
+          <p>
+            Điểm này không phải xác suất bài báo sai sự thật. Hãy đối chiếu tác giả, nguồn, thời điểm và bằng chứng độc lập.
+          </p>
+          {user && result.id && (
+            <FeedbackBox
+              scope="result"
+              analysisId={result.id}
+              existingFeedback={result.feedback}
+              token={token}
+              onFeedbackSaved={handleFeedbackSaved}
+              onUnauthorized={clearSession}
+              isSessionCurrent={() => activeTokenRef.current === token}
+            />
+          )}
+        </section>
+      )}
+
+      {user && (
+        <section className="panel" aria-label="Lịch sử phân tích cá nhân">
+          <div className="auth-header">
+            <div>
+              <p className="eyebrow">DỮ LIỆU CÁ NHÂN ({user.email})</p>
+              <h2 style={{ margin: 0 }}>Lịch sử phân tích ({historyTotal})</h2>
+            </div>
+            <button
+              type="button"
+              className="secondary small"
+              disabled={historyLoading}
+              onClick={() => fetchHistory(token, historyOffset)}
+            >
+              {historyLoading ? 'Đang tải...' : 'Làm mới'}
+            </button>
+          </div>
+
+          {historyError && <div className="notice error" role="alert">{historyError}</div>}
+
+          {historyLoading && history.length === 0 ? (
+            <p style={{ color: '#9fb4bd' }}>Đang tải lịch sử phân tích...</p>
+          ) : history.length === 0 ? (
+            <p style={{ color: '#9fb4bd' }}>
+              Tài khoản của bạn chưa có lượt phân tích nào.
+            </p>
+          ) : (
+            <div className="history-list">
+              {history.map((item) => (
+                <article key={item.id} className="history-item">
+                  <div className="history-meta">
+                    <span>
+                      <strong>#{item.id}</strong> · {new Date(item.created_at).toLocaleString('vi-VN')} ·{' '}
+                      <code>{item.model_version}</code>
+                    </span>
+                    <span className={`badge ${item.label === 'SUSPICIOUS' ? 'suspicious' : 'likely'}`}>
+                      {item.label} ({Math.round(item.score * 100)}%)
+                    </span>
+                  </div>
+                  <p className="history-preview">“{item.content_preview}”</p>
+                  <FeedbackBox
+                    scope="history"
+                    analysisId={item.id}
+                    existingFeedback={item.feedback}
+                    token={token}
+                    onFeedbackSaved={handleFeedbackSaved}
+                    onUnauthorized={clearSession}
+              isSessionCurrent={() => activeTokenRef.current === token}
+                  />
+                </article>
+              ))}
+            </div>
+          )}
+
+          {historyTotal > PAGE_LIMIT && (
+            <div className="pagination">
+              <span>
+                Hiển thị {historyOffset + 1}–{Math.min(historyOffset + history.length, historyTotal)} / {historyTotal}
+              </span>
+              <div className="auth-tabs">
+                <button
+                  type="button"
+                  className="secondary small"
+                  disabled={historyLoading || historyOffset === 0}
+                  onClick={() => fetchHistory(token, Math.max(0, historyOffset - PAGE_LIMIT))}
+                >
+                  ← Trang trước
+                </button>
+                <button
+                  type="button"
+                  className="secondary small"
+                  disabled={historyLoading || historyOffset + PAGE_LIMIT >= historyTotal}
+                  onClick={() => fetchHistory(token, historyOffset + PAGE_LIMIT)}
+                >
+                  Trang sau →
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      <footer>
+        Phạm vi v0: bài báo tiếng Anh · Đã hỗ trợ tài khoản, lịch sử và phản hồi; chưa hỗ trợ URL và LIME · Không dùng để đưa ra kết luận tự động
+      </footer>
+    </main>
+  )
 }
