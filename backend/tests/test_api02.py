@@ -9,6 +9,8 @@ from unittest.mock import patch
 _had_secret = "SECRET_KEY" in os.environ
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-api02-unit-tests-123456789")
 
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
@@ -40,7 +42,16 @@ class Api02Tests(unittest.TestCase):
         self.predictor = patch("backend.app.main.predictor")
         self.model = self.predictor.start().return_value
         self.model.ready = True
-        self.model.predict.return_value = ("SUSPICIOUS", 0.85)
+        self.model.analyze.side_effect = lambda *_args, **_kwargs: {
+            "label": "SUSPICIOUS",
+            "score": 0.85,
+            "model_version": "test-model",
+            "source_scope": "pasted_text",
+            "review_reason": "Test prediction",
+        }
+        verification = patch("backend.app.main.verify_claims", return_value={})
+        verification.start()
+        self.addCleanup(verification.stop)
 
     def tearDown(self):
         self.predictor.stop()
@@ -49,9 +60,9 @@ class Api02Tests(unittest.TestCase):
         Base.metadata.drop_all(bind=engine)
 
     def login(self, email):
-        response = self.client.post("/api/v1/auth/register", json={"email": email, "password": "Password123"})
+        response = self.client.post("/api/v1/auth/register", json={"email": email, "password": "Password123!"})
         self.assertEqual(response.status_code, 201, response.text)
-        response = self.client.post("/api/v1/auth/login", json={"email": email, "password": "Password123"})
+        response = self.client.post("/api/v1/auth/login", json={"email": email, "password": "Password123!"})
         self.assertEqual(response.status_code, 200, response.text)
         return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
@@ -135,11 +146,14 @@ class Api02Tests(unittest.TestCase):
             with existing_engine.begin() as connection:
                 connection.execute(text("INSERT INTO users (email, hashed_password, role, created_at) "
                                         "VALUES ('existing@example.com', 'hash', 'USER', CURRENT_TIMESTAMP)"))
+            config = Config(str(root / "alembic.ini"))
+            config.set_main_option("script_location", str(root / "alembic"))
+            head = ScriptDirectory.from_config(config).get_current_head()
             upgrade("head")
             with existing_engine.connect() as connection:
                 self.assertEqual(connection.execute(text("SELECT COUNT(*) FROM users")).scalar_one(), 1)
-                self.assertEqual({"analyses", "feedbacks"}.issubset(inspect(connection).get_table_names()), True)
-                self.assertEqual(connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one(), "6b74a2d90f31")
+                self.assertTrue({"analyses", "feedbacks", "email_codes"}.issubset(inspect(connection).get_table_names()))
+                self.assertEqual(connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one(), head)
             existing_engine.dispose()
 
 
