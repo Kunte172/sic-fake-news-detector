@@ -1,4 +1,6 @@
+from .fact_check import verify_claims
 from functools import lru_cache
+from urllib.parse import urlsplit
 from typing import Annotated
 from datetime import datetime
 from datetime import timedelta, timezone
@@ -52,12 +54,8 @@ class AnalyzeResponse(BaseModel):
     model_version: str
     score_kind: str = "model_probability"
     explanation: dict | None = None
-    review_status: str = "NEEDS_REVIEW"
-    decision: str = "NEEDS_REVIEW"
+    source_scope: str = "pasted_text"
     source_domain: str | None = None
-    source_scope: str
-    review_reason: str
-    verification: dict
 
 class UserRegisterRequest(BaseModel):
     email: EmailStr
@@ -314,9 +312,12 @@ def analyze(
         )
     try:
         article_text = fetch_article(body.url) if body.url is not None else body.text
+        prediction = predictor().analyze(article_text)
     except UrlError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
-    label, score = predictor().predict(article_text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    label, score = prediction["label"], prediction["score"]
     analysis_id = None
     if current_user is not None:
         record = models.Analysis(
@@ -325,13 +326,14 @@ def analyze(
             content_preview=article_text[:120],
             label=label,
             score=score,
-            model_version="baseline-v0",
+            model_version=prediction["model_version"],
         )
         db.add(record)
         db.commit()
         db.refresh(record)
         analysis_id = record.id
-    return AnalyzeResponse(id=analysis_id, **prediction)
+    return AnalyzeResponse(id=analysis_id, source_scope="external_url" if body.url is not None else "pasted_text",
+                           source_domain=urlsplit(body.url).hostname if body.url else None, **prediction)
 
 @app.get("/api/v1/analyses", response_model=PaginatedAnalyses)
 def get_analyses(

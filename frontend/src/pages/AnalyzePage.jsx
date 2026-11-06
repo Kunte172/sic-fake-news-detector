@@ -28,7 +28,7 @@ export default function AnalyzePage({ user, token, theme, language, onLogout, on
   const article = useRef(null)
   const length = text.trim().length
   const wordCount = length ? text.trim().split(/\s+/u).length : 0
-  const validUrl = /^https?:\/\/\S+$/i.test(text.trim())
+  const validUrl = text.trim().length <= 2048 && /^https?:\/\/\S+$/i.test(text.trim())
   const valid = inputMode === 'link' ? validUrl : length >= 80 && text.length <= 50000
   const suspiciousCount = history.items.filter((item) => item.label === 'SUSPICIOUS').length
   const safeCount = history.items.filter((item) => item.label === 'LESS_SUSPICIOUS').length
@@ -58,8 +58,7 @@ export default function AnalyzePage({ user, token, theme, language, onLogout, on
 
   useEffect(() => {
     activeTokenRef.current = token
-    if (!token) return undefined
-    loadHistory()
+    if (token) loadHistory()
     return () => {
       historyRequest.current?.abort()
       analysisRequest.current?.abort()
@@ -171,7 +170,7 @@ export default function AnalyzePage({ user, token, theme, language, onLogout, on
             </div>
             <div className="input-mode">
               <button type="button" className="mode-trigger" aria-haspopup="listbox" aria-expanded={modeOpen}
-                onClick={() => setModeOpen(!modeOpen)}><span className="mode-label"><Icon name={inputMode === 'link' ? 'link' : 'file'} size={16} /> {inputMode === 'link' ? 'Link' : (en ? 'Text' : 'Văn bản')}</span><span className="mode-chevron" aria-hidden="true" /></button>
+                disabled={loading} onClick={() => setModeOpen(!modeOpen)}><span className="mode-label"><Icon name={inputMode === 'link' ? 'link' : 'file'} size={16} /> {inputMode === 'link' ? 'Link' : (en ? 'Text' : 'Văn bản')}</span><span className="mode-chevron" aria-hidden="true" /></button>
               {modeOpen && <div className="mode-menu" role="listbox" aria-label="Chọn loại dữ liệu">
                 <button type="button" role="option" aria-selected={inputMode === 'link'} onClick={() => chooseMode('link')}><Icon name="link" size={16} /> Link</button>
                 <button type="button" role="option" aria-selected={inputMode === 'text'} onClick={() => chooseMode('text')}><Icon name="file" size={16} /> {en ? 'Text' : 'Văn bản'}</button>
@@ -180,11 +179,11 @@ export default function AnalyzePage({ user, token, theme, language, onLogout, on
           </div>
           <label className="visually-hidden" htmlFor="article">{inputMode === 'link' ? 'Đường dẫn bài báo' : 'Nội dung bài báo'}</label>
           {inputMode === 'link'
-            ? <input id="article" className="link-input" type="url" ref={article} value={text} disabled={loading}
+            ? <input id="article" className="link-input" type="url" maxLength={2048} required ref={article} value={text} disabled={loading}
                 onChange={(e) => replaceText(e.target.value)} placeholder="https://example.com/bai-bao" />
             : <textarea id="article" ref={article} value={text} maxLength={50000} disabled={loading}
                 onChange={(e) => replaceText(e.target.value)} aria-describedby="article-count article-hint"
-                placeholder="Dán tiêu đề và nội dung bài báo vào đây…" />}
+                placeholder="Dán nội dung bài báo tiếng Anh vào đây…" />}
           {inputMode === 'text' && <p className="counter" id="article-count">{text.length.toLocaleString('vi-VN')} / 50.000 ký tự · {wordCount.toLocaleString('vi-VN')} từ</p>}
           <p className="field-hint" id="article-hint">{inputMode === 'link' ? 'Nhập URL đầy đủ bắt đầu bằng https://.' : 'Bạn có thể dán nội dung bài báo hoặc viết trực tiếp (tối thiểu 80 ký tự).'}</p>
           <div className="editor-actions">

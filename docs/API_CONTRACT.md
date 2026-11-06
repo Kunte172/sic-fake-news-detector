@@ -77,4 +77,16 @@ Tài liệu này là nơi thống nhất hợp đồng trước khi code. Không
 - Nội dung trích xuất phải có 80–50000 ký tự; không đủ nội dung, trang JS-only/paywall hoặc định dạng không hỗ trợ trả 422 và yêu cầu dán văn bản.
 - 413: vượt kích thước tải; 422: URL/nội dung không hợp lệ; 502: DNS/HTTP/TLS thất bại; 503: resolver bận hoặc thiếu mô hình; 504: quá thời gian.
 
-Phần trích xuất là heuristic, không đảm bảo lấy đúng nội dung mọi website. Giới hạn này không được bỏ qua để vượt cơ chế chặn của website. Endpoint chưa thêm form URL ở frontend (phần UI tách biệt).
+Phần trích xuất là heuristic, không đảm bảo lấy đúng nội dung mọi website. Giới hạn này không được bỏ qua để vượt cơ chế chặn của website. Frontend có chế độ Link/Văn bản trong trang phân tích. Luồng URL trích text rồi gọi cùng Predictor.analyze/Explainer như text; source_scope=external_url và source_domain là hostname URL đầu vào. Không gọi nguồn bên ngoài là dữ liệu đã được kiểm chứng.
+
+## Tích hợp ML-01 (nhánh API/UI)
+
+Mục này cập nhật đề xuất ML-04 phía trên: `/api/v1/analyze` hỗ trợ ML-01 qua MODEL_REPORT_PATH và MODEL_CALIBRATION_PATH, giữ nguyên id/label/score/model_version, thêm score_kind và explanation. Phiên bản mô hình lưu vào lịch sử lấy từ metadata, không cố định baseline-v0.
+
+`explanation` mặc định là `{method: "tfidf_times_coefficient", terms: [{term, value, direction}], intercept, other_contribution, fake_margin, unit: "raw_linear_margin", disclaimer}`. Dương nghiêng về Fake; tổng terms.value + other_contribution + intercept = fake_margin. Unigram và bigram là đặc trưng riêng có thể chồng từ. Đây là giải thích margin, không phải phân rã xác suất hiệu chỉnh.
+
+ENABLE_LIME=true thêm `explanation.lime` theo schema ML-04 cũ. LIME thiếu thư viện được đánh dấu lime_unavailable. UI hiển thị disclaimer, nhãn từ server và cảnh báo fidelity thấp; không suy nhãn từ score. Baseline cũ trả explanation=null. Lịch sử chưa lưu explanation. Không tuyên bố đã triển khai cloud hoặc đã tái chạy đánh giá dữ liệu thật.
+
+### Hiển thị giải thích sau tích hợp API-03/ML-04
+
+ResultCard hiển thị contributions và giá trị đóng góp, margin/intercept/phần còn lại. LIME hiển thị khi ENABLE_LIME=true và thư viện sẵn sàng; cảnh báo fidelity thấp. Score luôn là điểm lớp Fake, không đảo 1-score thành “mức độ tin thật”. Chỉ metadata ML-01 cùng calibration đúng checksum kích hoạt Explainer; cấu hình baseline cũ vẫn trả explanation=null và UI giải thích rõ trạng thái này.

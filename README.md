@@ -100,3 +100,25 @@ Xem [hướng dẫn đưa lên GitHub](docs/GITHUB_SETUP.md) nếu bắt đầu 
 ## Phân tích URL (API-03)
 
 Sau khi nạp mô hình, mở `/docs` và gọi `POST /api/v1/analyze` với `{"url":"https://example.org/news/article"}` thay cho `text`. Có Bearer token hợp lệ sẽ lưu lịch sử với loại đầu vào URL. Trang cần JavaScript/đăng nhập hoặc không có đoạn bài phù hợp: dán nội dung text. Chi tiết giới hạn truy cập và mã lỗi nằm trong `docs/API_CONTRACT.md`.
+
+## Dùng ML-01 và giải thích trong ứng dụng
+
+Baseline cũ vẫn chạy theo phần bắt đầu nhanh. Để dùng mô hình ML-01 đã audit, giữ cùng artifact, báo cáo và hiệu chỉnh của một lần chạy:
+
+```powershell
+python -m ml.src.train_classic_models
+python -m ml.src.calibrate_selected
+$env:MODEL_PATH="ml/artifacts/ml01/ml01_selected.joblib"
+$env:MODEL_REPORT_PATH="ml/artifacts/ml01/ml01_report.json"
+$env:MODEL_CALIBRATION_PATH="ml/artifacts/ml01/ml01_calibration.json"
+# Tùy chọn: LIME chạy 1000 perturbations mỗi lượt, làm tăng độ trễ.
+python -m pip install -r ml/requirements-explain.txt
+$env:ENABLE_LIME="true"
+python -m uvicorn backend.app.main:app --reload --port 8000
+```
+
+Cần `prepared_splits.csv` DATA-02 và SECRET_KEY/database theo hướng dẫn phía trên. Chạy lại calibrate_selected nếu calibration cũ chưa có checksum mô hình. Chương trình đối chiếu checksum splits với báo cáo ML-01; API từ chối calibration của artifact khác. Chỉ tải joblib tin cậy do nhóm tạo.
+
+API trả nhãn theo mô hình, điểm Fake đã hiệu chỉnh và đóng góp chính xác theo TF-IDF × hệ số (bao gồm cặp từ). Tổng đóng góp hiển thị + phần còn lại + hệ số chặn bằng margin Fake; không cộng các giá trị này như phần trăm. Điểm trên 0,5 không nhất thiết tương ứng SUSPICIOUS: nhãn theo SVM là kết quả chính thức. LIME chỉ là xấp xỉ, UI cảnh báo khi fidelity dưới 0,5 (ngưỡng hiển thị quy ước, không phải chuẩn đảm bảo chất lượng).
+
+Giải thích hiện hiển thị ở kết quả mới, chưa lưu trong lịch sử. Thiếu artifact/hiệu chỉnh trả 503; văn bản rỗng sau làm sạch trả 422. Không cần DATA-03/LIAR.

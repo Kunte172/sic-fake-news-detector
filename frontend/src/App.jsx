@@ -1,17 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { api } from './api'
-import { Brand, useLanguage, useTheme } from './components/Theme'
-import AuthPage from './pages/AuthPage'
-import AnalyzePage from './pages/AnalyzePage'
-import AdminDashboard from './AdminDashboard'
+import AdminDashboard from './AdminDashboard.jsx'
+import AuthPage from './pages/AuthPage.jsx'
+import AnalyzePage from './pages/AnalyzePage.jsx'
+import { Brand, useTheme, useLanguage } from './components/Theme.jsx'
+import { api } from './api.js'
 
 const TOKEN_KEY = 'sic_access_token'
 const GUEST_KEY = 'sic_guest_mode'
-
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem(GUEST_KEY) === '1' ? '' : localStorage.getItem(TOKEN_KEY) || '')
-  const [user, setUser] = useState(null)
   const [guest, setGuest] = useState(() => localStorage.getItem(GUEST_KEY) === '1')
+  const [user, setUser] = useState(null)
   const [screen, setScreen] = useState('analyze')
   const [sessionMessage, setSessionMessage] = useState('')
   const [profileError, setProfileError] = useState('')
@@ -25,35 +24,34 @@ export default function App() {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(GUEST_KEY)
     setSessionMessage(message)
-    setUser(null)
     setToken('')
     setGuest(false)
-    setScreen('analyze')
+    setUser(null)
     setProfileError('')
+    setScreen('analyze')
   }
-
   function startSession(nextToken) {
     activeTokenRef.current = nextToken
     localStorage.setItem(TOKEN_KEY, nextToken)
     localStorage.removeItem(GUEST_KEY)
     setSessionMessage('')
+    setProfileError('')
+    setUser(null)
     setGuest(false)
     setScreen('analyze')
     setToken(nextToken)
   }
-
   function startGuest() {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.setItem(GUEST_KEY, '1')
     setSessionMessage('')
-    setUser(null)
     setProfileError('')
+    setUser(null)
     activeTokenRef.current = ''
     setToken('')
     setGuest(true)
-    window.history.replaceState(null, '', '/analyze')
+    setScreen('analyze')
   }
-
   useEffect(() => {
     if (!token || guest) return
     activeTokenRef.current = token
@@ -87,7 +85,7 @@ export default function App() {
   const destination = (user && token) || guest ? '/analyze' : token ? null : '/auth'
   useEffect(() => {
     function syncRoute() {
-      if (destination && location.pathname !== destination) history.replaceState(null, '', destination)
+      if (destination && location.pathname !== destination) window.history.replaceState(null, '', destination)
     }
     syncRoute()
     window.addEventListener('popstate', syncRoute)
@@ -109,5 +107,7 @@ export default function App() {
   if (screen === 'admin' && user.role === 'ADMIN') {
     return <AdminDashboard token={token} theme={theme} language={language} onLogout={clearSession} onOpenAnalyze={() => setScreen('analyze')} />
   }
-  return <AnalyzePage key={token || 'guest'} user={user} token={token} theme={theme} language={language} onLogout={clearSession} onOpenAdmin={() => setScreen('admin')} />
+
+  return <AnalyzePage key={token} user={user} token={token} theme={theme} language={language}
+    onLogout={clearSession} onOpenAdmin={() => setScreen('admin')} />
 }
