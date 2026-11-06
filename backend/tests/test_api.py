@@ -62,7 +62,8 @@ class ApiTests(unittest.TestCase):
         self.environment.stop()
 
     def _register_and_login(self, email="tester@example.com", password="Password123!"):
-        self.client.post("/api/v1/auth/register", json={"email": email, "password": password})
+        registration = self.client.post("/api/v1/auth/register", json={"email": email, "password": password})
+        self.assertEqual(registration.status_code, 201, registration.text)
         res = self.client.post("/api/v1/auth/login", json={"email": email, "password": password})
         return {"Authorization": f"Bearer {res.json()['access_token']}"}
 
@@ -79,7 +80,7 @@ class ApiTests(unittest.TestCase):
     def test_register_mass_assignment_blocked(self):
         res = self.client.post(
             "/api/v1/auth/register",
-            json={"email": "hacker@example.com", "password": "password123", "role": "ADMIN"}
+            json={"email": "hacker@example.com", "password": "Password123!", "role": "ADMIN"}
         )
         self.assertEqual(res.status_code, 201)
         self.assertEqual(res.json()["role"], "USER")
@@ -90,7 +91,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/v1/auth/register", json=payload).status_code, 400)
 
     def test_wrong_password_for_existing_user(self):
-        self._register_and_login("a@example.com", "Password123")
+        self._register_and_login("a@example.com", "Password123!")
         res = self.client.post("/api/v1/auth/login", json={"email": "a@example.com", "password": "WrongPassword!"})
         self.assertEqual(res.status_code, 401)
 
