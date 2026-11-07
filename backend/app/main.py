@@ -323,7 +323,7 @@ def analyze(
         record = models.Analysis(
             user_id=current_user.id,
             input_type="url" if body.url is not None else "text",
-            content_preview=article_text[:120],
+            content_preview=(body.url if body.url is not None else body.text)[:120],
             label=label,
             score=score,
             model_version=prediction["model_version"],
