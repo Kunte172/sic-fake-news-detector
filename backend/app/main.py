@@ -324,6 +324,7 @@ def analyze(
             user_id=current_user.id,
             input_type="url" if body.url is not None else "text",
             content_preview=(body.url if body.url is not None else body.text)[:120],
+            source_url=body.url,
             label=label,
             score=score,
             model_version=prediction["model_version"],
