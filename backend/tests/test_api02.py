@@ -127,14 +127,16 @@ class Api02Tests(unittest.TestCase):
     def test_url_analysis_saves_extracted_preview_and_input_type(self):
         alice = self.login("url-user@example.com")
         article = "Extracted English article text about public affairs. " * 4
+        url = "https://news.example/story"
         with patch("backend.app.main.fetch_article", return_value=article) as fetch:
-            result = self.client.post("/api/v1/analyze", headers=alice, json={"url":"https://news.example/story"})
+            result = self.client.post("/api/v1/analyze", headers=alice, json={"url": url})
         self.assertEqual(result.status_code, 200, result.text)
-        fetch.assert_called_once_with("https://news.example/story")
+        fetch.assert_called_once_with(url)
         self.model.analyze.assert_called_once_with(article)
         item = self.client.get("/api/v1/analyses", headers=alice).json()["items"][0]
         self.assertEqual(item["input_type"], "url")
-        self.assertEqual(item["content_preview"], article[:120])
+        self.assertEqual(item["content_preview"], url)
+        self.assertEqual(item["source_url"], url)
 
     def test_url_errors_and_input_exclusivity(self):
         from backend.app.url_extraction import UrlError
