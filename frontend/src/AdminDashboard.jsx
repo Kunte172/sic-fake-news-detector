@@ -200,7 +200,13 @@ export function CaseList({ items }) {
   )
 }
 
-export default function AdminDashboard({ token, onUnauthorized, isSessionCurrent }) {
+export default function AdminDashboard({
+  token,
+  onUnauthorized,
+  isSessionCurrent,
+  onOpenAnalyze,
+  onLogout,
+}) {
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0])
   const [offset, setOffset] = useState(0)
   const [labelFilter, setLabelFilter] = useState('ALL')
@@ -242,12 +248,30 @@ export default function AdminDashboard({ token, onUnauthorized, isSessionCurrent
     disputed.reload()
   }
 
+  // Nút quay lại: dùng prop từ App.jsx, nếu thiếu thì tải lại trang /analyze.
+  function goBack() {
+    if (onOpenAnalyze) onOpenAnalyze()
+    else window.location.assign('/analyze')
+  }
+
+  function logout() {
+    if (onLogout) onLogout()
+  }
+
   if (summary.status === 'forbidden' || disputed.status === 'forbidden') {
     return (
       <section className="panel" aria-label="Quản trị">
         <p className="eyebrow">QUẢN TRỊ</p>
         <div className="notice error" role="alert">
           Tài khoản này không có quyền ADMIN nên không xem được trang quản trị.
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <button type="button" className="secondary small" onClick={goBack}>
+            ← Quay lại phân tích
+          </button>
+          <button type="button" className="secondary small" onClick={logout}>
+            Đăng xuất
+          </button>
         </div>
       </section>
     )
@@ -263,9 +287,17 @@ export default function AdminDashboard({ token, onUnauthorized, isSessionCurrent
           <p className="eyebrow">QUẢN TRỊ</p>
           <h2 style={{ margin: 0 }}>Thống kê và ca bị phản hồi không đồng ý</h2>
         </div>
-        <button type="button" className="secondary small" disabled={loading} onClick={reloadAll}>
-          {loading ? 'Đang tải...' : 'Làm mới'}
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" className="secondary small" onClick={goBack}>
+            ← Quay lại phân tích
+          </button>
+          <button type="button" className="secondary small" disabled={loading} onClick={reloadAll}>
+            {loading ? 'Đang tải...' : 'Làm mới'}
+          </button>
+          <button type="button" className="secondary small" onClick={logout}>
+            Đăng xuất
+          </button>
+        </div>
       </div>
 
       <SummaryCards
