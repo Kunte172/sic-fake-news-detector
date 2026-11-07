@@ -41,6 +41,7 @@ class Analysis(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     input_type = Column(String(16), nullable=False)
     content_preview = Column(String(255), nullable=False)
+    source_url = Column(Text, nullable=True)
     label = Column(String(32), nullable=False)
     score = Column(Float, nullable=False)
     model_version = Column(String(64), nullable=False)
