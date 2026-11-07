@@ -1,0 +1,12 @@
+{
+  "method": "platt_sigmoid",
+  "slope": -7.499209802091479,
+  "intercept": 0.4563872970048535,
+  "fit_on": "validation",
+  "model_sha256": "d53e9516144a2091acda18dc1b5c4d03f320fd1aab27f25d6c10ac908df27812",
+  "input_sha256": "05d9736daedb95cd97732f0d0368937b4ba424ebb1f88031f72d8c127f4c1760",
+  "n_validation": 3824,
+  "test_brier": 0.00572,
+  "test_rows_where_threshold_0.5_disagrees_with_svm": 8,
+  "note": "Điểm đã hiệu chỉnh, không phải xác suất sự kiện sai sự thật. Nhãn công bố vẫn theo SVM."
+}

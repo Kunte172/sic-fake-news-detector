@@ -21,6 +21,7 @@ Thêm biến môi trường:
 - `DATABASE_URL`: Internal Database URL của PostgreSQL vừa tạo. Backend chuyển tiếp scheme `postgres://`/`postgresql://` sang driver `psycopg` có trong requirements.
 - `PYTHON_VERSION`: `3.11.11` (hoặc bản Python 3.11 được Render hỗ trợ trong thời điểm deploy).
 - `MODEL_PATH`: đường dẫn tới artifact mô hình nếu đã cung cấp artifact cho dịch vụ.
+- `ADMIN_EMAIL` và `ADMIN_PASSWORD`: tài khoản quản trị. Nếu email đã đăng ký trước, mật khẩu cấu hình phải khớp mật khẩu hiện tại của tài khoản đó thì API mới nâng quyền lên `ADMIN` khi khởi động. Đăng xuất rồi đăng nhập lại để làm mới phiên; kiểm tra `role` tại `/api/v1/auth/me`. Không dùng mật khẩu mẫu.
 
 **Lưu ý về mô hình:** artifact mô hình không nằm trong Git. Nếu chưa đưa một artifact tương thích vào môi trường backend và chưa đặt `MODEL_PATH`, dịch vụ API vẫn có thể khởi động nhưng `/api/v1/analyze` sẽ trả `503 Model not loaded`. Kiểm tra `model_loaded` trong phản hồi `/health`. Với mô hình ML-01 cần cấu hình đồng bộ `MODEL_PATH`, `MODEL_REPORT_PATH` và `MODEL_CALIBRATION_PATH` như README hướng dẫn; không tự ý dùng artifact không khớp checksum.
 

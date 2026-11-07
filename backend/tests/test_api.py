@@ -18,7 +18,7 @@ from typing import Annotated
 from fastapi import Depends
 from jose import jwt
 
-from backend.app.main import app, predictor, require_admin
+from backend.app.main import app, predictor, require_admin, init_admin_user
 from backend.app.database import Base, get_db
 from backend.app import models
 from backend.app.auth import create_access_token, get_password_hash
@@ -76,6 +76,26 @@ class ApiTests(unittest.TestCase):
 
     def test_empty_input_is_rejected(self):
         self.assertEqual(self.client.post("/api/v1/analyze", json={"text": ""}).status_code, 422)
+
+    def test_url_input_fetches_article_and_records_url(self):
+        headers = self._register_and_login()
+        article = "A sufficiently long English news article. " * 5
+        prediction = {"label": "LESS_SUSPICIOUS", "score": 0.2,
+                      "model_version": "test", "score_kind": "model_probability",
+                      "explanation": None}
+        with patch("backend.app.main.predictor") as mock_predictor, \
+             patch("backend.app.main.fetch_article", return_value=article) as mock_fetch:
+            mock_predictor.return_value.ready = True
+            mock_predictor.return_value.analyze.return_value = prediction
+            response = self.client.post("/api/v1/analyze",
+                                        json={"url": "https://example.com/article"}, headers=headers)
+            self.assertEqual(response.status_code, 200, response.text)
+            mock_fetch.assert_called_once_with("https://example.com/article")
+            mock_predictor.return_value.analyze.assert_called_once_with(article)
+        with TestingSessionLocal() as db:
+            record = db.query(models.Analysis).one()
+            self.assertEqual(record.input_type, "url")
+            self.assertEqual(record.content_preview, "https://example.com/article")
 
     def test_register_mass_assignment_blocked(self):
         res = self.client.post(
@@ -186,6 +206,22 @@ class ApiTests(unittest.TestCase):
         
         test_admin_res = self.client.get("/api/v1/admin/test-only", headers=headers)
         self.assertEqual(test_admin_res.status_code, 200)
+
+    def test_existing_user_becomes_admin_only_with_matching_configured_password(self):
+        email = "existing@example.com"
+        password = "Existing123!"
+        with TestingSessionLocal() as db:
+            db.add(models.User(email=email, hashed_password=get_password_hash(password), role=models.Role.USER))
+            db.commit()
+        with patch("backend.app.main.database.get_db", side_effect=override_get_db):
+            with patch.dict(os.environ, {"ADMIN_EMAIL": email, "ADMIN_PASSWORD": "Wrong123!"}):
+                init_admin_user()
+            with TestingSessionLocal() as db:
+                self.assertEqual(db.query(models.User).filter_by(email=email).one().role, models.Role.USER)
+            with patch.dict(os.environ, {"ADMIN_EMAIL": email, "ADMIN_PASSWORD": password}):
+                init_admin_user()
+        with TestingSessionLocal() as db:
+            self.assertEqual(db.query(models.User).filter_by(email=email).one().role, models.Role.ADMIN)
 
 if __name__ == "__main__":
     unittest.main()
