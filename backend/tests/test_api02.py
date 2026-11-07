@@ -136,7 +136,9 @@ class Api02Tests(unittest.TestCase):
         item = self.client.get("/api/v1/analyses", headers=alice).json()["items"][0]
         self.assertEqual(item["input_type"], "url")
         self.assertEqual(item["content_preview"], url)
-        self.assertEqual(item["source_url"], url)
+        with Session() as db:
+            analysis = db.query(models.Analysis).one()
+            self.assertEqual(analysis.source_url, url)
 
     def test_url_errors_and_input_exclusivity(self):
         from backend.app.url_extraction import UrlError
