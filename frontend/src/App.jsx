@@ -25,7 +25,7 @@ export default function App() {
     activeTokenRef.current = ''
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(GUEST_KEY)
-    setSessionMessage(message)
+    setSessionMessage(typeof message === 'string' ? message : '')
     setToken('')
     setGuest(false)
     setUser(null)
@@ -114,7 +114,7 @@ export default function App() {
         isSessionCurrent={isSessionCurrent}
         theme={theme}
         language={language}
-        onLogout={clearSession}
+        onLogout={() => clearSession()}
         onOpenAnalyze={() => setScreen('analyze')}
       />
     )
