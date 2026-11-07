@@ -124,6 +124,34 @@ class Api02Tests(unittest.TestCase):
             self.assertEqual(db.query(models.Feedback).count(), 1)
             self.assertEqual(db.query(models.Feedback).filter(models.Feedback.agree.is_(False)).count(), 0)
 
+    def test_url_analysis_saves_extracted_preview_and_input_type(self):
+        alice = self.login("url-user@example.com")
+        article = "Extracted English article text about public affairs. " * 4
+        url = "https://news.example/story"
+        with patch("backend.app.main.fetch_article", return_value=article) as fetch:
+            result = self.client.post("/api/v1/analyze", headers=alice, json={"url": url})
+        self.assertEqual(result.status_code, 200, result.text)
+        fetch.assert_called_once_with(url)
+        self.model.analyze.assert_called_once_with(article)
+        item = self.client.get("/api/v1/analyses", headers=alice).json()["items"][0]
+        self.assertEqual(item["input_type"], "url")
+        self.assertEqual(item["content_preview"], url)
+        with Session() as db:
+            analysis = db.query(models.Analysis).one()
+            self.assertEqual(analysis.source_url, url)
+
+    def test_url_errors_and_input_exclusivity(self):
+        from backend.app.url_extraction import UrlError
+        for payload in ({}, {"url":"https://news.example", "text":"Long article " * 20}):
+            self.assertEqual(self.client.post("/api/v1/analyze", json=payload).status_code, 422)
+        with patch("backend.app.main.fetch_article", side_effect=UrlError("blocked host", 422)):
+            result = self.client.post("/api/v1/analyze", json={"url":"http://127.0.0.1"})
+            self.assertEqual(result.status_code,422)
+            self.assertEqual(result.json()["detail"],"blocked host")
+        with patch("backend.app.main.fetch_article") as fetch:
+            self.assertEqual(self.client.post("/api/v1/analyze", json={"url":"https://news.example"}, headers={"Authorization":"Bearer invalid"}).status_code,401)
+            fetch.assert_not_called()
+
     def test_migration_upgrades_existing_users_database(self):
         root = Path(__file__).resolve().parents[2]
         with tempfile.TemporaryDirectory() as directory:

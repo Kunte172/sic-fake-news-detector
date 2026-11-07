@@ -97,6 +97,10 @@ API yêu cầu `SECRET_KEY` khi khởi động. Dùng cùng một khóa bí mậ
 
 Xem [hướng dẫn đưa lên GitHub](docs/GITHUB_SETUP.md) nếu bắt đầu từ bản ZIP.
 
+## Phân tích URL (API-03)
+
+Sau khi nạp mô hình, mở `/docs` và gọi `POST /api/v1/analyze` với `{"url":"https://example.org/news/article"}` thay cho `text`. Có Bearer token hợp lệ sẽ lưu lịch sử với loại đầu vào URL. Trang cần JavaScript/đăng nhập hoặc không có đoạn bài phù hợp: dán nội dung text. Chi tiết giới hạn truy cập và mã lỗi nằm trong `docs/API_CONTRACT.md`.
+
 ## Dùng ML-01 và giải thích trong ứng dụng
 
 Baseline cũ vẫn chạy theo phần bắt đầu nhanh. Để dùng mô hình ML-01 đã audit, giữ cùng artifact, báo cáo và hiệu chỉnh của một lần chạy:

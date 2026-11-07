@@ -79,6 +79,12 @@ class Ml01InferenceTests(unittest.TestCase):
                     self.assertEqual(result.json()['model_version'], 'test:svm')
                     self.assertIsNone(result.json()['id'])
                     self.assertEqual(result.json()['explanation']['method'], 'tfidf_times_coefficient')
+                    with patch('backend.app.main.fetch_article', return_value='read more shocking hoax ' * 8):
+                        url_result = client.post('/api/v1/analyze', json={'url':'https://news.example/story'})
+                    self.assertEqual(url_result.status_code, 200, url_result.text)
+                    self.assertEqual(url_result.json()['model_version'], 'test:svm')
+                    self.assertEqual(url_result.json()['source_scope'], 'external_url')
+                    self.assertEqual(url_result.json()['explanation']['method'], 'tfidf_times_coefficient')
         finally:
             app.dependency_overrides.clear()
             app.dependency_overrides.update(previous)
