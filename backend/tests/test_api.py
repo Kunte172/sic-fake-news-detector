@@ -77,6 +77,26 @@ class ApiTests(unittest.TestCase):
     def test_empty_input_is_rejected(self):
         self.assertEqual(self.client.post("/api/v1/analyze", json={"text": ""}).status_code, 422)
 
+    def test_url_input_fetches_article_and_records_url(self):
+        headers = self._register_and_login()
+        article = "A sufficiently long English news article. " * 5
+        prediction = {"label": "LESS_SUSPICIOUS", "score": 0.2,
+                      "model_version": "test", "score_kind": "model_probability",
+                      "explanation": None}
+        with patch("backend.app.main.predictor") as mock_predictor, \
+             patch("backend.app.main.fetch_article", return_value=article) as mock_fetch:
+            mock_predictor.return_value.ready = True
+            mock_predictor.return_value.analyze.return_value = prediction
+            response = self.client.post("/api/v1/analyze",
+                                        json={"url": "https://example.com/article"}, headers=headers)
+            self.assertEqual(response.status_code, 200, response.text)
+            mock_fetch.assert_called_once_with("https://example.com/article")
+            mock_predictor.return_value.analyze.assert_called_once_with(article)
+        with TestingSessionLocal() as db:
+            record = db.query(models.Analysis).one()
+            self.assertEqual(record.input_type, "url")
+            self.assertEqual(record.content_preview, "https://example.com/article")
+
     def test_register_mass_assignment_blocked(self):
         res = self.client.post(
             "/api/v1/auth/register",

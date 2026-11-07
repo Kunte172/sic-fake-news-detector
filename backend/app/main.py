@@ -309,7 +309,10 @@ def analyze(
             ),
         )
     try:
-        prediction = predictor().analyze(body.text)
+        article_text = fetch_article(body.url) if body.url is not None else body.text
+        prediction = predictor().analyze(article_text)
+    except UrlError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     label, score = prediction["label"], prediction["score"]
@@ -317,8 +320,8 @@ def analyze(
     if current_user is not None:
         record = models.Analysis(
             user_id=current_user.id,
-            input_type="text",
-            content_preview=body.text[:120],
+            input_type="url" if body.url is not None else "text",
+            content_preview=(body.url or body.text)[:120],
             label=label,
             score=score,
             model_version=prediction["model_version"],
