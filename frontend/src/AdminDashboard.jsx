@@ -178,6 +178,54 @@ function CaseComment({ comment }) {
   )
 }
 
+function isHttpUrl(value) {
+  return /^https?:\/\/\S+$/i.test(String(value ?? '').trim())
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    // Trình duyệt chặn Clipboard API: dùng cách dự phòng.
+    try {
+      const area = document.createElement('textarea')
+      area.value = text
+      area.setAttribute('readonly', '')
+      area.style.position = 'fixed'
+      area.style.opacity = '0'
+      document.body.appendChild(area)
+      area.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(area)
+      return ok
+    } catch {
+      return false
+    }
+  }
+}
+
+function LinkActions({ url }) {
+  const [copyState, setCopyState] = useState('idle') // idle | done | failed
+
+  async function handleCopy() {
+    const ok = await copyText(url)
+    setCopyState(ok ? 'done' : 'failed')
+    window.setTimeout(() => setCopyState('idle'), 2000)
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0' }}>
+      <button type="button" className="secondary small" onClick={handleCopy}>
+        {copyState === 'done' ? 'Đã sao chép ✓' : copyState === 'failed' ? 'Không sao chép được' : 'Sao chép đường link'}
+      </button>
+      <a className="secondary small" href={url} target="_blank" rel="noopener noreferrer">
+        Mở link trong tab mới
+      </a>
+    </div>
+  )
+}
+
 export function CaseList({ items }) {
   return (
     <div className="history-list">
@@ -193,6 +241,7 @@ export function CaseList({ items }) {
             </span>
           </div>
           <p className="history-preview">“{item.content_preview}”</p>
+          {isHttpUrl(item.content_preview) && <LinkActions url={item.content_preview.trim()} />}
           <CaseComment comment={item.comment} />
         </article>
       ))}
